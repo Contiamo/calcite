@@ -794,7 +794,7 @@ public class RelToSqlConverterTest {
         + "FROM \"foodmart\".\"product\"";
     final String expectedMysql = "SELECT SUBSTRING(`brand_name` FROM 2)\n"
         + "FROM `foodmart`.`product`";
-    final String expectedMssql = "SELECT SUBSTRING([brand_name] FROM 2)\n"
+    final String expectedMssql = "SELECT SUBSTRING([brand_name], 2)\n"
         + "FROM [foodmart].[product]";
     sql(query)
         .dialect(DatabaseProduct.ORACLE.getDialect())
@@ -816,7 +816,7 @@ public class RelToSqlConverterTest {
         + "FROM \"foodmart\".\"product\"";
     final String expectedMysql = "SELECT SUBSTRING(`brand_name` FROM 2 FOR 3)\n"
         + "FROM `foodmart`.`product`";
-    final String expectedMssql = "SELECT SUBSTRING([brand_name] FROM 2 FOR 3)\n"
+    final String expectedMssql = "SELECT SUBSTRING([brand_name], 2, 3)\n"
         + "FROM [foodmart].[product]";
     sql(query)
         .dialect(DatabaseProduct.ORACLE.getDialect())

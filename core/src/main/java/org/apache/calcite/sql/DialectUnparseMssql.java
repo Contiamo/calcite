@@ -17,6 +17,8 @@
 package org.apache.calcite.sql;
 
 import org.apache.calcite.avatica.util.TimeUnitRange;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.type.ReturnTypes;
 
 /**
  * <code>DialectUnparseMssql</code> defines how a <code>SqlOperator</code> should be unparsed
@@ -24,24 +26,37 @@ import org.apache.calcite.avatica.util.TimeUnitRange;
  * if this database's implementation is standard.
  */
 public class DialectUnparseMssql implements SqlDialect.DialectUnparser {
+  public static final SqlFunction MSSQL_SUBSTRING =
+      new SqlFunction("SUBSTRING", SqlKind.OTHER_FUNCTION,
+          ReturnTypes.ARG0_NULLABLE_VARYING, null, null,
+          SqlFunctionCategory.STRING);
+
   public void unparseCall(
       SqlOperator operator,
       SqlWriter writer,
       SqlCall call,
       int leftPrec,
       int rightPrec) {
-    switch (operator.getKind()) {
-    case FLOOR:
-      if (call.operandCount() != 2) {
-        operator.unparse(writer, call, leftPrec, rightPrec);
-        return;
+    if (operator == SqlStdOperatorTable.SUBSTRING) {
+      if (call.operandCount() != 3) {
+        throw new AssertionError("MSSQL SUBSTRING requires FROM and FOR arguments");
       }
+      SqlUtil.unparseFunctionSyntax(MSSQL_SUBSTRING, writer, call);
 
-      unparseFloor(writer, call);
-      break;
+    } else {
+      switch (operator.getKind()) {
+      case FLOOR:
+        if (call.operandCount() != 2) {
+          operator.unparse(writer, call, leftPrec, rightPrec);
+          return;
+        }
 
-    default:
-      operator.unparse(writer, call, leftPrec, rightPrec);
+        unparseFloor(writer, call);
+        break;
+
+      default:
+        operator.unparse(writer, call, leftPrec, rightPrec);
+      }
     }
   }
 
