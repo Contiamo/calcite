@@ -20,6 +20,7 @@ import org.apache.calcite.config.NullCollation;
 import org.apache.calcite.sql.dialect.AccessSqlDialect;
 import org.apache.calcite.sql.dialect.AnsiSqlDialect;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
+import org.apache.calcite.sql.dialect.ClickhouseSqlDialect;
 import org.apache.calcite.sql.dialect.Db2SqlDialect;
 import org.apache.calcite.sql.dialect.DerbySqlDialect;
 import org.apache.calcite.sql.dialect.FirebirdSqlDialect;
@@ -78,6 +79,8 @@ public class SqlDialectFactoryImpl implements SqlDialectFactory {
       return new AccessSqlDialect(c);
     case "APACHE DERBY":
       return new DerbySqlDialect(c);
+    case "CLICKHOUSE":
+      return new ClickhouseSqlDialect(c);
     case "DBMS:CLOUDSCAPE":
       return new DerbySqlDialect(c);
     case "HIVE":
@@ -164,6 +167,8 @@ public class SqlDialectFactoryImpl implements SqlDialectFactory {
       return AccessSqlDialect.DEFAULT;
     case CALCITE:
       return CalciteSqlDialect.DEFAULT;
+    case CLICKHOUSE:
+      return ClickhouseSqlDialect.DEFAULT;
     case DB2:
       return Db2SqlDialect.DEFAULT;
     case DERBY:
