@@ -16,6 +16,9 @@
  */
 package org.apache.calcite.test;
 
+import org.apache.calcite.config.CalciteConnectionConfigImpl;
+import org.apache.calcite.plan.Context;
+import org.apache.calcite.plan.Contexts;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptUtil;
@@ -119,6 +122,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import javax.annotation.Nullable;
 
@@ -3006,6 +3010,39 @@ public class RelOptRulesTest extends RelOptTestBase {
     sql(sql).withPre(preProgram).with(program).check();
   }
 
+  @Test public void testJoinPushTransitivePredicatesRule() {
+    HepProgram preProgram = new HepProgramBuilder()
+        .addRuleInstance(FilterJoinRule.FILTER_ON_JOIN)
+        .addRuleInstance(FilterJoinRule.JOIN)
+        .addRuleInstance(JoinPushTransitivePredicatesRule.INSTANCE)
+        .build();
+
+    final HepPlanner hepPlanner =
+        new HepPlanner(new HepProgramBuilder().build());
+
+    final String sql = "select d.deptno from sales.emp d where d.deptno\n"
+        + "IN (select e.deptno from sales.emp e "
+        + "where e.deptno = d.deptno or e.deptno = 4)";
+    sql(sql).withPre(preProgram).with(hepPlanner).checkUnchanged();
+  }
+
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-2195">[CALCITE-2195]
+   * AggregateJoinTransposeRule fails to aggregate over unique column</a>. */
+  @Test public void testPushAggregateThroughJoin6() {
+    final HepProgram preProgram = new HepProgramBuilder()
+        .addRuleInstance(AggregateProjectMergeRule.INSTANCE)
+        .build();
+    final HepProgram program = new HepProgramBuilder()
+        .addRuleInstance(AggregateJoinTransposeRule.EXTENDED)
+        .build();
+    final String sql = "select sum(B.sal)\n"
+        + "from sales.emp as A\n"
+        + "join (select distinct sal from sales.emp) as B\n"
+        + "on A.sal=B.sal\n";
+    sql(sql).withPre(preProgram).with(program).check();
+  }
+
   /** SUM is the easiest aggregate function to split. */
   @Test public void testPushAggregateSumThroughJoin() {
     final HepProgram preProgram = new HepProgramBuilder()
@@ -3178,7 +3215,7 @@ public class RelOptRulesTest extends RelOptTestBase {
     Tester tester = new TesterImpl(getDiffRepos(), true, true, false, false,
         null, null) {
       @Override public RelOptPlanner createPlanner() {
-        return new MockRelOptPlanner() {
+        return new MockRelOptPlanner(Contexts.empty()) {
           @Override public List<RelTraitDef> getRelTraitDefs() {
             return ImmutableList.<RelTraitDef>of(RelCollationTraitDef.INSTANCE);
           }
@@ -3704,17 +3741,19 @@ public class RelOptRulesTest extends RelOptTestBase {
    * Converting predicates on date dimension columns into date ranges</a>,
    * specifically a rule that converts {@code EXTRACT(YEAR FROM ...) = constant}
    * to a range. */
-  @Test public void testExtractYearToRange() throws Exception {
+  @Test public void testExtractYearToRange() {
     final String sql = "select *\n"
         + "from sales.emp_b as e\n"
         + "where extract(year from birthdate) = 2014";
     HepProgram program = new HepProgramBuilder()
         .addRuleInstance(DateRangeRules.FILTER_INSTANCE)
         .build();
-    sql(sql).with(program).check();
+    final Context context =
+        Contexts.of(new CalciteConnectionConfigImpl(new Properties()));
+    sql(sql).with(program).withContext(context).check();
   }
 
-  @Test public void testExtractYearMonthToRange() throws Exception {
+  @Test public void testExtractYearMonthToRange() {
     final String sql = "select *\n"
         + "from sales.emp_b as e\n"
         + "where extract(year from birthdate) = 2014"
@@ -3722,7 +3761,9 @@ public class RelOptRulesTest extends RelOptTestBase {
     HepProgram program = new HepProgramBuilder()
         .addRuleInstance(DateRangeRules.FILTER_INSTANCE)
         .build();
-    sql(sql).with(program).check();
+    final Context context =
+        Contexts.of(new CalciteConnectionConfigImpl(new Properties()));
+    sql(sql).with(program).withContext(context).check();
   }
 
 }

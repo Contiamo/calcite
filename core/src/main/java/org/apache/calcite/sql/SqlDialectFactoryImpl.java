@@ -17,6 +17,7 @@
 package org.apache.calcite.sql;
 
 import org.apache.calcite.config.NullCollation;
+
 import org.apache.calcite.sql.dialect.AccessSqlDialect;
 import org.apache.calcite.sql.dialect.AnsiSqlDialect;
 import org.apache.calcite.sql.dialect.CalciteSqlDialect;
@@ -31,6 +32,7 @@ import org.apache.calcite.sql.dialect.InfobrightSqlDialect;
 import org.apache.calcite.sql.dialect.InformixSqlDialect;
 import org.apache.calcite.sql.dialect.IngresSqlDialect;
 import org.apache.calcite.sql.dialect.InterbaseSqlDialect;
+import org.apache.calcite.sql.dialect.JethroDataSqlDialect;
 import org.apache.calcite.sql.dialect.LucidDbSqlDialect;
 import org.apache.calcite.sql.dialect.MssqlSqlDialect;
 import org.apache.calcite.sql.dialect.MysqlSqlDialect;
@@ -45,6 +47,9 @@ import org.apache.calcite.sql.dialect.SybaseSqlDialect;
 import org.apache.calcite.sql.dialect.TeradataSqlDialect;
 import org.apache.calcite.sql.dialect.VerticaSqlDialect;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Locale;
@@ -53,14 +58,23 @@ import java.util.Locale;
  * The default implementation of a <code>SqlDialectFactory</code>.
  */
 public class SqlDialectFactoryImpl implements SqlDialectFactory {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SqlDialectFactoryImpl.class);
+
+  public static final SqlDialectFactoryImpl INSTANCE = new SqlDialectFactoryImpl();
+
+  private final JethroDataSqlDialect.JethroInfoCache jethroCache =
+      JethroDataSqlDialect.createCache();
+
   public SqlDialect create(DatabaseMetaData databaseMetaData) {
     String databaseProductName;
     int databaseMajorVersion;
     int databaseMinorVersion;
+    String databaseVersion;
     try {
       databaseProductName = databaseMetaData.getDatabaseProductName();
       databaseMajorVersion = databaseMetaData.getDatabaseMajorVersion();
       databaseMinorVersion = databaseMetaData.getDatabaseMinorVersion();
+      databaseVersion = databaseMetaData.getDatabaseProductVersion();
     } catch (SQLException e) {
       throw new RuntimeException("while detecting database product", e);
     }
@@ -72,6 +86,7 @@ public class SqlDialectFactoryImpl implements SqlDialectFactory {
         .withDatabaseProductName(databaseProductName)
         .withDatabaseMajorVersion(databaseMajorVersion)
         .withDatabaseMinorVersion(databaseMinorVersion)
+        .withDatabaseVersion(databaseVersion)
         .withIdentifierQuoteString(quoteString)
         .withNullCollation(nullCollation);
     switch (upperProductName) {
@@ -89,6 +104,9 @@ public class SqlDialectFactoryImpl implements SqlDialectFactory {
       return new IngresSqlDialect(c);
     case "INTERBASE":
       return new InterbaseSqlDialect(c);
+    case "JETHRODATA":
+      return new JethroDataSqlDialect(
+          c.withJethroInfo(jethroCache.get(databaseMetaData)));
     case "LUCIDDB":
       return new LucidDbSqlDialect(c);
     case "ORACLE":
@@ -189,6 +207,8 @@ public class SqlDialectFactoryImpl implements SqlDialectFactory {
       return IngresSqlDialect.DEFAULT;
     case INTERBASE:
       return InterbaseSqlDialect.DEFAULT;
+    case JETHRO:
+      throw new RuntimeException("Jethro does not support simple creation");
     case LUCIDDB:
       return LucidDbSqlDialect.DEFAULT;
     case MSSQL:
@@ -221,6 +241,7 @@ public class SqlDialectFactoryImpl implements SqlDialectFactory {
       return null;
     }
   }
+
 }
 
 // End SqlDialectFactoryImpl.java

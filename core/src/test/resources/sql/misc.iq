@@ -1030,6 +1030,78 @@ Expression 'DEPTNO' is not being grouped
 
 !use scott
 
+# ORDER BY expression with SELECT DISTINCT
+select distinct deptno, job
+from "scott".emp
+order by substring(job from 2 for 1), -deptno;
++--------+-----------+
+| DEPTNO | JOB       |
++--------+-----------+
+|     30 | SALESMAN  |
+|     30 | MANAGER   |
+|     20 | MANAGER   |
+|     10 | MANAGER   |
+|     30 | CLERK     |
+|     20 | CLERK     |
+|     10 | CLERK     |
+|     20 | ANALYST   |
+|     10 | PRESIDENT |
++--------+-----------+
+(9 rows)
+
+!ok
+
+# [CALCITE-2180] Invalid code generated for negative of byte and short values
+select -deptno as d
+from "scott".dept;
++-----+
+| D   |
++-----+
+| -40 |
+| -30 |
+| -20 |
+| -10 |
++-----+
+(4 rows)
+
+!ok
+
+# [CALCITE-2099] Incorrect code generated for UNION
+select count(*) as c from "scott".emp group by deptno
+union
+select count(*) as c from "scott".emp group by deptno;
++---+
+| C |
++---+
+| 3 |
+| 5 |
+| 6 |
++---+
+(3 rows)
+
+!ok
+
+# Similar
+select count(*) as c from "scott".emp group by job
+union all
+select count(*) as c from "scott".dept group by deptno;
++---+
+| C |
++---+
+| 1 |
+| 1 |
+| 1 |
+| 1 |
+| 1 |
+| 2 |
+| 3 |
+| 4 |
+| 4 |
++---+
+(9 rows)
+
+!ok
+
 # [CALCITE-1864] Allow NULL literal as argument
 select count(*) as c from "scott".emp where empno > null;
 +---+
@@ -2041,5 +2113,30 @@ WHERE hiredate = '1980-12-17';
 
 !ok
 !}
+
+# [CALCITE-2002] DISTINCT applied to VALUES returns wrong result
+SELECT DISTINCT T.B
+FROM (VALUES (1, 'X'),(2, 'Y'),(3, 'X'),(4, 'X')) AS T(A, B);
++---+
+| B |
++---+
+| X |
+| Y |
++---+
+(2 rows)
+
+!ok
+
+# [CALCITE-2183] Implement RelSubset.copy
+select *
+from (values (1, 'a'), (2, 'b'), (1, 'b'), (2, 'c'), (2, 'c')) as t(x, y)
+where false;
++---+---+
+| X | Y |
++---+---+
++---+---+
+(0 rows)
+
+!ok
 
 # End misc.iq

@@ -2609,6 +2609,40 @@ LogicalIntersect(all=[true])
 ]]>
         </Resource>
     </TestCase>
+    <TestCase name="testJoinPushTransitivePredicatesRule">
+        <Resource name="sql">
+            <![CDATA[select d.deptno from sales.emp d where d.deptno
+IN (select e.deptno from sales.emp e where e.deptno = d.deptno or e.deptno = 4)]]>
+        </Resource>
+        <Resource name="planBefore">
+            <![CDATA[
+LogicalProject(DEPTNO=[$7])
+  LogicalFilter(condition=[=($7, $9)])
+    LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{7}])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalAggregate(group=[{0}])
+        LogicalProject(DEPTNO=[$7])
+          LogicalFilter(condition=[OR(=($7, $cor0.DEPTNO), =($7, 4))])
+            LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+        </Resource>
+        <Resource name="planAfter">
+            <![CDATA[
+LogicalProject(DEPTNO=[$7])
+  LogicalJoin(condition=[AND(=($7, $10), =($7, $9))], joinType=[inner])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalFilter(condition=[OR(=($1, $0), =($1, 4))])
+      LogicalAggregate(group=[{0, 1}])
+        LogicalProject(DEPTNO=[$0], DEPTNO0=[$1])
+          LogicalProject(DEPTNO=[$7], DEPTNO0=[$9])
+            LogicalJoin(condition=[OR(=($7, $9), =($7, 4))], joinType=[inner])
+              LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+              LogicalAggregate(group=[{0}])
+                LogicalProject(DEPTNO=[$7])
+                  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+        </Resource>
+    </TestCase>
     <TestCase name="testMergeIntersect">
         <Resource name="sql">
             <![CDATA[select * from emp where deptno = 10
@@ -5806,7 +5840,8 @@ LogicalProject(DEPTNO=[$0])
   LogicalJoin(condition=[=($0, $1)], joinType=[inner])
     LogicalAggregate(group=[{7}])
       LogicalTableScan(table=[[CATALOG, SALES, EMP]])
-    LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+    LogicalProject(DEPTNO=[$0])
+      LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
 ]]>
         </Resource>
     </TestCase>
@@ -5828,11 +5863,40 @@ LogicalProject(DEPTNO=[$0], DEPTNO0=[$1])
         <Resource name="planAfter">
             <![CDATA[
 LogicalProject(DEPTNO=[$0], DEPTNO0=[$1])
-  LogicalProject(DEPTNO=[$0], DEPTNO0=[$1])
-    LogicalJoin(condition=[=($0, $1)], joinType=[inner])
-      LogicalAggregate(group=[{7}])
-        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+  LogicalJoin(condition=[=($0, $1)], joinType=[inner])
+    LogicalAggregate(group=[{7}])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalProject(DEPTNO=[$0])
       LogicalTableScan(table=[[CATALOG, SALES, DEPT]])
+]]>
+        </Resource>
+    </TestCase>
+    <TestCase name="testPushAggregateThroughJoin6">
+        <Resource name="sql">
+            <![CDATA[select sum(B.sal)
+from sales.emp as A
+join (select distinct sal from sales.emp) as B
+on A.sal=B.sal
+]]>
+        </Resource>
+        <Resource name="planBefore">
+            <![CDATA[
+LogicalAggregate(group=[{}], EXPR$0=[SUM($9)])
+  LogicalJoin(condition=[=($5, $9)], joinType=[inner])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalAggregate(group=[{5}])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+        </Resource>
+        <Resource name="planAfter">
+            <![CDATA[
+LogicalAggregate(group=[{}], EXPR$0=[SUM($3)])
+  LogicalProject(SAL=[$0], $f1=[$1], SAL0=[$2], $f3=[CAST(*($1, $2)):INTEGER])
+    LogicalJoin(condition=[=($0, $2)], joinType=[inner])
+      LogicalAggregate(group=[{5}], agg#0=[COUNT()])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalAggregate(group=[{5}])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
         </Resource>
     </TestCase>

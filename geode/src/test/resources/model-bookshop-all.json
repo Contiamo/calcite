@@ -13,13 +13,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * A JSON model of a simple Calcite schema.
  */
-package org.apache.calcite.adapter.druid;
-
-/**
- * Created by jhyde on 3/9/16.
- */
-public class DruidResultEnumerator {
+{
+  "version": "1.0",
+  "defaultSchema": "TEST",
+  "schemas": [
+    {
+      "name": "TEST",
+      "type": "custom",
+      "factory": "org.apache.calcite.adapter.geode.rel.GeodeSchemaFactory",
+      "operand": {
+        "locatorHost": "localhost",
+        "locatorPort": "10334",
+        "regions": "BookMaster,BookCustomer,BookOrder,BookInventory",
+        "pdxSerializablePackagePath": "org.apache.calcite.adapter.geode.domain.bookshop.*"
+      }
+    }
+  ]
 }
-
-// End DruidResultEnumerator.java
