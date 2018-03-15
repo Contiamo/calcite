@@ -324,7 +324,13 @@ public class JdbcSchema implements Schema {
         break;
       default:
         precision = resultSet.getInt(7); // SIZE
-        scale = resultSet.getInt(9); // SCALE
+        Object scaleObj = resultSet.getObject(9);
+        // BigQuery JDBC driver throws exception when getInt(9); is called on non-numeric types.
+        if (scaleObj == null) {
+          scale = 0;
+        } else {
+          scale = ((Integer) scaleObj).intValue();
+        }
         break;
       }
       RelDataType sqlType =
