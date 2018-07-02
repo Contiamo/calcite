@@ -171,6 +171,20 @@ public class ClickHouseSqlDialect extends SqlDialect {
         unparseFloor(writer, call);
         break;
 
+      case COUNT:
+        // CH returns NULL rather than 0 for COUNT(DISTINCT) of NULL values.
+        // https://github.com/yandex/ClickHouse/issues/2494
+        // Wrap the call in a CH specific coalesce (assumeNotNull).
+        if (call.getFunctionQuantifier().toString().equals("DISTINCT")) {
+          writer.print("assumeNotNull");
+          SqlWriter.Frame frame = writer.startList("(", ")");
+          super.unparseCall(writer, call, leftPrec, rightPrec);
+          writer.endList(frame);
+        } else {
+          super.unparseCall(writer, call, leftPrec, rightPrec);
+        }
+        break;
+
       default:
         super.unparseCall(writer, call, leftPrec, rightPrec);
       }

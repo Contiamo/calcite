@@ -255,6 +255,16 @@ public class RelToSqlConverterTest {
         .ok(expectedPostgresql);
   }
 
+  @Test public void testSelectQueryWithDistinctCount() {
+    String query =
+        "select count(distinct \"address2\") as \"cnt\" from \"foodmart\".\"customer\" where \"address2\" is null";
+
+    final String expected = "SELECT assumeNotNull(COUNT(DISTINCT `address2`)) AS `cnt`\n"
+        + "FROM `foodmart`.`customer`\n"
+        + "WHERE `address2` IS NULL";
+    sql(query).withClickHouse().ok(expected);
+  }
+
   @Test public void testSelectQueryWithGroupByAndProjectList1() {
     String query =
         "select count(*)  from \"product\" group by \"product_class_id\", \"product_id\"";
