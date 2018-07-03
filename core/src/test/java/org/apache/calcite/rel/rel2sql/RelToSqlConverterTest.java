@@ -265,6 +265,15 @@ public class RelToSqlConverterTest {
     sql(query).withClickHouse().ok(expected);
   }
 
+  @Test public void testSelectQueryWithCountStar() {
+    String query =
+        "select count(*) as \"cnt\" from \"foodmart\".\"customer\"";
+
+    final String expected = "SELECT COUNT(*) AS `cnt`\n"
+        + "FROM `foodmart`.`customer`";
+    sql(query).withClickHouse().ok(expected);
+  }
+
   @Test public void testSelectQueryWithGroupByAndProjectList1() {
     String query =
         "select count(*)  from \"product\" group by \"product_class_id\", \"product_id\"";
