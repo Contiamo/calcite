@@ -265,6 +265,16 @@ public class RelToSqlConverterTest {
     sql(query).withClickHouse().ok(expected);
   }
 
+  @Test public void testSelectQueryWithApproxDistinctCount() {
+    String query =
+        "select approx_count_distinct(\"address2\") as \"cnt\" from \"foodmart\".\"customer\" where \"address2\" is null";
+
+    final String expected = "SELECT assumeNotNull(uniq(`address2`)) AS `cnt`\n"
+        + "FROM `foodmart`.`customer`\n"
+        + "WHERE `address2` IS NULL";
+    sql(query).withClickHouse().ok(expected);
+  }
+
   @Test public void testSelectQueryWithCountStar() {
     String query =
         "select count(*) as \"cnt\" from \"foodmart\".\"customer\"";
