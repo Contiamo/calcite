@@ -693,6 +693,7 @@ public abstract class SqlUtil {
               SqlNode.EMPTY_ARRAY,
               id.getParserPosition(),
               true,
+              false,
               null);
         }
       }
