@@ -245,26 +245,27 @@ public class RelMdCollation
       collations.add(RelCollations.of(fieldCollations));
     }
 
-    final List<RelFieldCollation> fieldCollationsForRexCalls =
-        new ArrayList<>();
-    for (Map.Entry<Integer, SqlMonotonicity> entry
-        : targetsWithMonotonicity.entrySet()) {
-      final SqlMonotonicity value = entry.getValue();
-      switch (value) {
-      case NOT_MONOTONIC:
-      case CONSTANT:
-        break;
-      default:
-        fieldCollationsForRexCalls.add(
-            new RelFieldCollation(entry.getKey(),
-                RelFieldCollation.Direction.of(value)));
-        break;
-      }
-    }
-
-    if (!fieldCollationsForRexCalls.isEmpty()) {
-      collations.add(RelCollations.of(fieldCollationsForRexCalls));
-    }
+    // BUG with multiple collations
+//    final List<RelFieldCollation> fieldCollationsForRexCalls =
+//        new ArrayList<>();
+//    for (Map.Entry<Integer, SqlMonotonicity> entry
+//        : targetsWithMonotonicity.entrySet()) {
+//      final SqlMonotonicity value = entry.getValue();
+//      switch (value) {
+//      case NOT_MONOTONIC:
+//      case CONSTANT:
+//        break;
+//      default:
+//        fieldCollationsForRexCalls.add(
+//            new RelFieldCollation(entry.getKey(),
+//                RelFieldCollation.Direction.of(value)));
+//        break;
+//      }
+//    }
+//
+//    if (!fieldCollationsForRexCalls.isEmpty()) {
+//      collations.add(RelCollations.of(fieldCollationsForRexCalls));
+//    }
 
     return ImmutableList.copyOf(collations);
   }
