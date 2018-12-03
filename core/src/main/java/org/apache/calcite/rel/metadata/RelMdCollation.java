@@ -246,8 +246,9 @@ public class RelMdCollation
     }
 
     // FIXME: Combining collations currently doesn't work.
-    // Projecting monotonic functions on a column which is to be sorted results in a collation for each of the calculated
-    // columns. Combining those collations somehow removes them all, which generates a query without sort.
+    // Projecting monotonic functions on a column which is to be sorted results in a collation for
+    // each of the calculated columns. Combining those collations somehow removes them all, which
+    // generates a query without sort.
 //    final List<RelFieldCollation> fieldCollationsForRexCalls =
 //        new ArrayList<>();
 //    for (Map.Entry<Integer, SqlMonotonicity> entry
