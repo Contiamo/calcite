@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,14 @@ public class MongoRules {
           }
         },
         SqlValidatorUtil.EXPR_SUGGESTER, true);
+  }
+
+  public static String encode(String s) {
+    try {
+      return Base64.getEncoder().encodeToString(s.getBytes("UTF-8"));
+    } catch (Exception e) {
+      throw new RuntimeException("Cannot encode string: " + s);
+    }
   }
 
   static String maybeQuote(String s) {
@@ -172,7 +181,7 @@ public class MongoRules {
 
     @Override public String visitInputRef(RexInputRef inputRef) {
       return maybeQuote(
-          "$" + inFields.get(inputRef.getIndex()));
+          "$" + MongoRules.encode(inFields.get(inputRef.getIndex())));
     }
 
     @Override public String visitCall(RexCall call) {
