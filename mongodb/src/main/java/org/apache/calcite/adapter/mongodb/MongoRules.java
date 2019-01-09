@@ -50,7 +50,6 @@ import org.slf4j.Logger;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,11 +103,7 @@ public class MongoRules {
   }
 
   public static String encode(String s) {
-    try {
-      return Base64.getEncoder().encodeToString(s.getBytes("UTF-8"));
-    } catch (Exception e) {
-      throw new RuntimeException("Cannot encode string: " + s);
-    }
+    return s.replace(".", "_dot_");
   }
 
   static String maybeQuote(String s) {
