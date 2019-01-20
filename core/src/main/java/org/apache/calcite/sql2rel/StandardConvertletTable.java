@@ -218,7 +218,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
               SqlStdOperatorTable.CAST.createCall(SqlParserPos.ZERO,
                   SqlStdOperatorTable.JSON_VALUE_ANY.createCall(
                       SqlParserPos.ZERO, call.operand(0), call.operand(1),
-                      call.operand(2), call.operand(3), call.operand(4), null),
+                      call.operand(2), call.operand(3), call.operand(4)),
               call.operand(5));
           return cx.convertExpression(expanded);
         });
