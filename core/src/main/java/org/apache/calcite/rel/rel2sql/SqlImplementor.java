@@ -165,7 +165,20 @@ public abstract class SqlImplementor {
     }
     final List<Clause> clauses =
         Expressions.list(Clause.SET_OP);
-    return result(node, clauses, rel, null);
+
+    Result res = result(node, clauses, rel, null);
+
+    if (!dialect.requiresAliasForFromItems()) {
+      return res;
+    } else {
+      return res.withSqlNode(
+              SqlStdOperatorTable.AS.createCall(
+                      SqlParserPos.ZERO,
+                      res.node,
+                      new SqlIdentifier("FAKE_ALIAS", SqlParserPos.ZERO)
+              )
+      );
+    }
   }
 
   /**
@@ -994,6 +1007,10 @@ public abstract class SqlImplementor {
     private final RelDataType neededType;
     private final Map<String, RelDataType> aliases;
     final Expressions.FluentList<Clause> clauses;
+
+    public Result withSqlNode(SqlNode node) {
+      return new Result(node, clauses, neededAlias, neededType, aliases);
+    }
 
     public Result(SqlNode node, Collection<Clause> clauses, String neededAlias,
         RelDataType neededType, Map<String, RelDataType> aliases) {

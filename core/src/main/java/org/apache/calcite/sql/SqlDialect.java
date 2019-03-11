@@ -550,7 +550,7 @@ public class SqlDialect {
   }
 
   // -- behaviors --
-  protected boolean requiresAliasForFromItems() {
+  public boolean requiresAliasForFromItems() {
     return false;
   }
 
