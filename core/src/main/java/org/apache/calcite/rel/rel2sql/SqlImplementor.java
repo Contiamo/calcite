@@ -23,6 +23,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -41,7 +42,7 @@ import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.rex.RexWindow;
 import org.apache.calcite.rex.RexWindowBound;
-import org.apache.calcite.sql.JoinType;
+import  org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlBinaryOperator;
@@ -61,7 +62,6 @@ import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSetOperator;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.fun.SqlCase;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.fun.SqlSumEmptyIsZeroAggFunction;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeFamily;
@@ -165,7 +165,19 @@ public abstract class SqlImplementor {
     }
     final List<Clause> clauses =
         Expressions.list(Clause.SET_OP);
-    return result(node, clauses, rel, null);
+
+    Result res = result(node, clauses, rel, null);
+
+    if(!dialect.requiresAliasForFromItems()) return res;
+    else {
+      return res.withSqlNode(
+              SqlStdOperatorTable.AS.createCall(
+                      SqlParserPos.ZERO,
+                      res.node,
+                      new SqlIdentifier("FAKE_ALIAS", SqlParserPos.ZERO)
+              )
+      );
+    }
   }
 
   /**
@@ -994,6 +1006,10 @@ public abstract class SqlImplementor {
     private final RelDataType neededType;
     private final Map<String, RelDataType> aliases;
     final Expressions.FluentList<Clause> clauses;
+
+    public Result withSqlNode(SqlNode n) {
+      return new Result(n, clauses, neededAlias, neededType, aliases);
+    }
 
     public Result(SqlNode node, Collection<Clause> clauses, String neededAlias,
         RelDataType neededType, Map<String, RelDataType> aliases) {
