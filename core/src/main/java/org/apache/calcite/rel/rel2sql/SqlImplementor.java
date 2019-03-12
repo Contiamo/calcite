@@ -1008,7 +1008,7 @@ public abstract class SqlImplementor {
     private final Map<String, RelDataType> aliases;
     final Expressions.FluentList<Clause> clauses;
 
-    public Result withSqlNode(SqlNode n) {
+    public Result withSqlNode(SqlNode node) {
       return new Result(n, clauses, neededAlias, neededType, aliases);
     }
 
