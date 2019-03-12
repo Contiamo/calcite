@@ -178,7 +178,7 @@ public class RelToSqlConverter extends SqlImplementor
       return childRes;
     }
 
-    if(dialect.requiresAliasForFromItems() && child instanceof Project) {
+    if (dialect.requiresAliasForFromItems() && child instanceof Project) {
       childRes = childRes.withSqlNode(
               SqlStdOperatorTable.AS.createCall(
                       SqlParserPos.ZERO,
