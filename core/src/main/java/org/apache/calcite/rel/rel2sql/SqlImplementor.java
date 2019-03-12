@@ -1009,7 +1009,7 @@ public abstract class SqlImplementor {
     final Expressions.FluentList<Clause> clauses;
 
     public Result withSqlNode(SqlNode node) {
-      return new Result(n, clauses, neededAlias, neededType, aliases);
+      return new Result(node, clauses, neededAlias, neededType, aliases);
     }
 
     public Result(SqlNode node, Collection<Clause> clauses, String neededAlias,
