@@ -170,26 +170,13 @@ public class RelToSqlConverter extends SqlImplementor
 
   /** @see #dispatch */
   public Result visit(Project e) {
-    RelNode child = e.getInput();
-    Result childRes = visitChild(0, child);
-    parseCorrelTable(e, childRes);
-
+    Result x = visitChild(0, e.getInput());
+    parseCorrelTable(e, x);
     if (isStar(e.getChildExps(), e.getInput().getRowType(), e.getRowType())) {
-      return childRes;
+      return x;
     }
-
-    if (dialect.requiresAliasForFromItems() && child instanceof Project) {
-      childRes = childRes.withSqlNode(
-              SqlStdOperatorTable.AS.createCall(
-                      SqlParserPos.ZERO,
-                      childRes.node,
-                      new SqlIdentifier("FAKE_ALIAS", SqlParserPos.ZERO)
-              )
-      );
-    }
-
     final Builder builder =
-        childRes.builder(e, Clause.SELECT);
+        x.builder(e, Clause.SELECT);
     final List<SqlNode> selectList = new ArrayList<>();
     for (RexNode ref : e.getChildExps()) {
       SqlNode sqlExpr = builder.context.toSql(null, ref);
