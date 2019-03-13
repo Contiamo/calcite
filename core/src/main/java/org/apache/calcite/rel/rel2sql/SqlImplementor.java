@@ -175,7 +175,7 @@ public abstract class SqlImplementor {
               SqlStdOperatorTable.AS.createCall(
                       SqlParserPos.ZERO,
                       res.node,
-                      new SqlIdentifier("FAKE_ALIAS", SqlParserPos.ZERO)
+                      new SqlIdentifier("s99", SqlParserPos.ZERO)
               )
       );
     }
@@ -1144,7 +1144,7 @@ public abstract class SqlImplementor {
      * can be derived using the usual rules (For example, "SELECT * FROM emp" is
      * equivalent to "SELECT * FROM emp AS emp".) */
     public SqlNode asFrom() {
-      if (neededAlias != null) {
+      if (neededAlias != null && SqlValidatorUtil.getAlias(node, -1) == null) {
         return SqlStdOperatorTable.AS.createCall(POS, node,
             new SqlIdentifier(neededAlias, POS));
       }
