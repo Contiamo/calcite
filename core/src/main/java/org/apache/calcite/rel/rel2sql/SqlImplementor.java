@@ -1144,9 +1144,13 @@ public abstract class SqlImplementor {
      * can be derived using the usual rules (For example, "SELECT * FROM emp" is
      * equivalent to "SELECT * FROM emp AS emp".) */
     public SqlNode asFrom() {
-      if (neededAlias != null && SqlValidatorUtil.getAlias(node, -1) == null) {
-        return SqlStdOperatorTable.AS.createCall(POS, node,
-            new SqlIdentifier(neededAlias, POS));
+      if (neededAlias != null) {
+        SqlNode n = node;
+        // hack to fix 'missing alias in postgres FROM clause'. Need proper fix
+        if (node.getKind() == SqlKind.AS) {
+          n = ((SqlCall) node).operand(0);
+        }
+        return SqlStdOperatorTable.AS.createCall(POS, n, new SqlIdentifier(neededAlias, POS));
       }
       return node;
     }
