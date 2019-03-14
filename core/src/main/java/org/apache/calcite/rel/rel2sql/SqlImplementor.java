@@ -120,6 +120,10 @@ public abstract class SqlImplementor {
     String name = rowType.getFieldNames().get(selectList.size());
     String alias = SqlValidatorUtil.getAlias(node, -1);
     if (alias == null || !alias.equals(name)) {
+      // hack to fix 'missing alias in postgres FROM clause'. Need proper fix
+      if (node.getKind() == SqlKind.AS) {
+        node = ((SqlCall) node).operand(0);
+      }
       node = SqlStdOperatorTable.AS.createCall(
           POS, node, new SqlIdentifier(name, POS));
     }
