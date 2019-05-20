@@ -125,7 +125,7 @@ public class MaterializationService {
       tableEntry = null;
     }
     if (tableEntry == null) {
-      // here we meat materialized table so looking in root schema
+      // here we mean materialized table so looking in root schema
       tableEntry = schema.getTableBySql(viewSql);
     }
 
