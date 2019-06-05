@@ -32,9 +32,6 @@ public class VerticaSqlDialect extends SqlDialect {
     super(context);
   }
 
-  @Override public boolean supportsNestedAggregations() {
-    return false;
-  }
 }
 
 // End VerticaSqlDialect.java

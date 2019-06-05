@@ -849,7 +849,7 @@ public class SqlDialect {
    * {@code SELECT SUM(SUM(1)) }.
    */
   public boolean supportsNestedAggregations() {
-    return true;
+    return false;
   }
 
   /** Returns how NULL values are sorted if an ORDER BY item does not contain
