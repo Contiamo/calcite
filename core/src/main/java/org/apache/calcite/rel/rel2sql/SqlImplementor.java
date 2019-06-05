@@ -1164,15 +1164,26 @@ public abstract class SqlImplementor {
             aggregatesArgs.addAll(aggregateCall.getArgList());
           }
           for (int aggregatesArg : aggregatesArgs) {
-            if (selectList.get(aggregatesArg) instanceof SqlBasicCall) {
-              final SqlBasicCall call =
-                  (SqlBasicCall) selectList.get(aggregatesArg);
-              for (SqlNode operand : call.getOperands()) {
-                if (operand instanceof SqlCall
-                    && ((SqlCall) operand).getOperator() instanceof SqlAggFunction) {
-                  return true;
-                }
-              }
+            if (containsAggregations(selectList.get(aggregatesArg))) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    private boolean containsAggregations(SqlNode node) {
+      if (node instanceof SqlWindow) {
+        return true;
+      } else if (node instanceof SqlBasicCall) {
+        final SqlBasicCall call = (SqlBasicCall) node;
+        if (call.getOperator() instanceof SqlAggFunction) {
+          return true;
+        } else {
+          for (SqlNode operand : call.getOperands()) {
+            if (containsAggregations(operand)) {
+              return true;
             }
           }
         }

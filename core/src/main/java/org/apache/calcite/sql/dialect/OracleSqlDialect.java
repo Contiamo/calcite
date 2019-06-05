@@ -72,6 +72,10 @@ public class OracleSqlDialect extends SqlDialect {
     super(context);
   }
 
+  @Override public boolean supportsNestedAggregations() {
+    return true;
+  }
+
   @Override public boolean supportsCharSet() {
     return false;
   }

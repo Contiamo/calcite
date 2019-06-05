@@ -901,7 +901,7 @@ public class SqlDialect {
    * {@code SELECT SUM(SUM(1)) }.
    */
   public boolean supportsNestedAggregations() {
-    return true;
+    return false;
   }
 
   /**
