@@ -43,7 +43,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLXML;
 import java.sql.Statement;
 import java.sql.Time;
@@ -286,11 +285,11 @@ public class ResultSetEnumerable<T> extends AbstractEnumerable<T> {
   }
 
   private void setTimeoutIfPossible(Statement statement) throws SQLException {
-    try {
-      statement.setQueryTimeout(10);
-    } catch (SQLFeatureNotSupportedException e) {
-      LOGGER.debug("Failed to set query timeout.");
-    }
+//    try {
+//      statement.setQueryTimeout(10);
+//    } catch (SQLFeatureNotSupportedException e) {
+//      LOGGER.debug("Failed to set query timeout.");
+//    }
   }
 
   private void closeIfPossible(Connection connection, Statement statement) {
