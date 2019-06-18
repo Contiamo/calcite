@@ -1115,7 +1115,6 @@ public abstract class SqlImplementor {
           for (AggregateCall aggregateCall : rel.getAggCallList()) {
             aggregatesArgs.addAll(aggregateCall.getArgList());
           }
-          aggregatesArgs.addAll(rel.getGroupSet().toList());
           for (ImmutableBitSet groupSet: rel.getGroupSets()) {
             aggregatesArgs.addAll(groupSet.toList());
           }
