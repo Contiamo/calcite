@@ -558,25 +558,12 @@ public abstract class RelOptUtil {
       }
     }
 
-    final int projectedKeyCount = exprs.size();
     exprs.add(rexBuilder.makeLiteral(true));
 
     ret = relBuilder.push(ret).project(exprs).build();
 
-    final AggregateCall aggCall =
-        AggregateCall.create(SqlStdOperatorTable.MIN,
-            false,
-            false,
-            ImmutableList.of(projectedKeyCount),
-            -1,
-            RelCollations.EMPTY,
-            projectedKeyCount,
-            ret,
-            null,
-            null);
-
-    ret = LogicalAggregate.create(ret, ImmutableBitSet.range(projectedKeyCount),
-        null, ImmutableList.of(aggCall));
+    ret = LogicalAggregate.create(ret, ImmutableBitSet.range(exprs.size()),
+        null, ImmutableList.of());
 
     switch (logic) {
     case TRUE_FALSE_UNKNOWN:
