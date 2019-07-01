@@ -1179,14 +1179,16 @@ public abstract class SqlImplementor {
     private void addColumnAliases(SqlNode node) {
       if (node instanceof SqlSelect && neededType != null) {
         SqlNodeList selectList = ((SqlSelect) node).getSelectList();
-        for (int i = 0; i < selectList.size(); i++) {
-          String name = neededType.getFieldNames().get(i);
-          if (name.startsWith("EXPR$")) {
-            SqlNode e = selectList.get(i);
-            SqlNode aliased = SqlStdOperatorTable.AS.createCall(
-                POS, e, new SqlIdentifier(name, POS));
-            selectList.set(i, aliased);
-            ordinalMap.remove(name.toLowerCase(Locale.ROOT));
+        if (selectList != null) { // select * doesn't have select list
+          for (int i = 0; i < selectList.size(); i++) {
+            String name = neededType.getFieldNames().get(i);
+            if (name.startsWith("EXPR$")) {
+              SqlNode e = selectList.get(i);
+              SqlNode aliased = SqlStdOperatorTable.AS.createCall(
+                  POS, e, new SqlIdentifier(name, POS));
+              selectList.set(i, aliased);
+              ordinalMap.remove(name.toLowerCase(Locale.ROOT));
+            }
           }
         }
       }
