@@ -81,6 +81,7 @@ import java.math.BigDecimal;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -1142,11 +1143,22 @@ public abstract class SqlImplementor {
         if (call.getOperator() instanceof SqlAggFunction) {
           return true;
         } else {
-          for (SqlNode operand : call.getOperands()) {
-            if (containsAggregations(operand)) {
-              return true;
-            }
-          }
+          return containsAggregations(Arrays.asList(call.getOperands()));
+        }
+      } else if (node instanceof SqlCase) {
+        final SqlCase call = (SqlCase) node;
+        return containsAggregations(call.getValueOperand())
+            || containsAggregations((Iterable<SqlNode>) call.getWhenOperands())
+            || containsAggregations((Iterable<SqlNode>) call.getThenOperands())
+            || containsAggregations(call.getElseOperand());
+      }
+      return false;
+    }
+
+    private boolean containsAggregations(Iterable<SqlNode> nodes) {
+      for (SqlNode node : nodes) {
+        if (containsAggregations(node)) {
+          return true;
         }
       }
       return false;
