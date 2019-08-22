@@ -18,19 +18,23 @@ package org.apache.calcite.sql.dialect;
 
 import org.apache.calcite.avatica.util.TimeUnitRange;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.SqlAbstractDateTimeLiteral;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ReturnTypes;
 
 /**
@@ -74,6 +78,23 @@ public class MssqlSqlDialect extends SqlDialect {
           return;
         }
         unparseFloor(writer, call);
+        break;
+
+      case JOIN:
+        // MS SQL does not support boolean literals. "ON TRUE" is converted to "ON 1 = 1".
+        SqlJoin join = (SqlJoin) call;
+        if (join.getConditionType() == JoinConditionType.ON
+            && join.getCondition().getKind() == SqlKind.LITERAL) {
+          SqlParserPos pos = call.getParserPosition();
+          String compareTo = (((SqlLiteral) join.getCondition()).getValue().equals(true))
+              ? "1" : "0";
+          SqlNode op = new SqlBasicCall(SqlStdOperatorTable.EQUALS, new SqlNode[]{
+              SqlLiteral.createExactNumeric("1", pos),
+              SqlLiteral.createExactNumeric(compareTo, pos)
+          }, pos);
+          join.setOperand(5, op);
+        }
+        super.unparseCall(writer, call, leftPrec, rightPrec);
         break;
 
       default:
