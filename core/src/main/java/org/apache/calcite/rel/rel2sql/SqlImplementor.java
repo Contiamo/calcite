@@ -1190,7 +1190,7 @@ public abstract class SqlImplementor {
       if (node instanceof SqlSelect && neededType != null) {
         final SqlSelect select = (SqlSelect) node;
         SqlNodeList selectList = select.getSelectList();
-        if (select.getSelectList() == null && aliases != null && aliases.size() > 1) {
+        if (selectList == null && aliases != null && aliases.size() > 1) {
           // we have * and need to alias all columns explicitly to disambiguate
           final SqlNodeList nodes = new SqlNodeList(POS);
           final Context ctx = aliasContext(aliases, true);
