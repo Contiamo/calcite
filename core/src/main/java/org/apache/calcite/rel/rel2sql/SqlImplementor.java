@@ -43,7 +43,6 @@ import org.apache.calcite.rex.RexWindow;
 import org.apache.calcite.rex.RexWindowBound;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlAggFunction;
-import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDialect;
@@ -81,7 +80,6 @@ import java.math.BigDecimal;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -1138,19 +1136,13 @@ public abstract class SqlImplementor {
     private boolean containsAggregations(SqlNode node) {
       if (node instanceof SqlWindow) {
         return true;
-      } else if (node instanceof SqlBasicCall) {
-        final SqlBasicCall call = (SqlBasicCall) node;
+      } else if (node instanceof SqlCall) {
+        final SqlCall call = (SqlCall) node;
         if (call.getOperator() instanceof SqlAggFunction) {
           return true;
         } else {
-          return containsAggregations(Arrays.asList(call.getOperands()));
+          return containsAggregations(call.getOperandList());
         }
-      } else if (node instanceof SqlCase) {
-        final SqlCase call = (SqlCase) node;
-        return containsAggregations(call.getValueOperand())
-            || containsAggregations((Iterable<SqlNode>) call.getWhenOperands())
-            || containsAggregations((Iterable<SqlNode>) call.getThenOperands())
-            || containsAggregations(call.getElseOperand());
       }
       return false;
     }
