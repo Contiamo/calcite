@@ -1081,6 +1081,32 @@ public class RelToSqlConverterTest {
     sql(query).dialect(mySqlDialect(NullCollation.LAST)).ok(expected);
   }
 
+  @Test public void testCountOnGroupBy() {
+    String query = "select count(*) from (select \"city\", count(*) from \"foodmart\".\"customer\" group by \"city\")";
+    String expected = "SELECT COUNT(*)\n"
+      + "FROM (SELECT 0 AS \"$f0\"\n"
+      + "FROM \"foodmart\".\"customer\"\n"
+      + "GROUP BY \"city\") AS \"t1\"";
+    String oracle = "SELECT COUNT(*)\n"
+      + "FROM (SELECT 0 \"$f0\"\n"
+      + "FROM \"foodmart\".\"customer\"\n"
+      + "GROUP BY \"city\") \"t1\"";
+    sql(query).ok(expected).withOracle().ok(oracle);
+  }
+
+  @Test public void testCountOnConstantProjectWithGroupBy() {
+    String query = "select count(*) from (select 0 from \"foodmart\".\"customer\" group by \"city\")";
+    String expected = "SELECT COUNT(*)\n"
+        + "FROM (SELECT 0 AS \"$f0\"\n"
+        + "FROM \"foodmart\".\"customer\"\n"
+        + "GROUP BY \"city\") AS \"t1\"";
+    String oracle = "SELECT COUNT(*)\n"
+        + "FROM (SELECT 0 \"$f0\"\n"
+        + "FROM \"foodmart\".\"customer\"\n"
+        + "GROUP BY \"city\") \"t1\"";
+    sql(query).ok(expected).withOracle().ok(oracle);
+  }
+
   @Test public void testSelectQueryWithLimitClauseWithoutOrder() {
     String query = "select \"product_id\"  from \"product\" limit 100 offset 10";
     final String expected = "SELECT \"product_id\"\n"
