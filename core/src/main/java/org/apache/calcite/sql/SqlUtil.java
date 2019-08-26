@@ -391,10 +391,11 @@ public abstract class SqlUtil {
   /**
    * If a join uses ON with a boolean literal convert it to an expression.
    *
-   * <p>Convert "a JOIN b ON TRUE" to "a JOIN b ON 1 = 1".
+   * <p>Convert "a JOIN b ON TRUE" to "a JOIN b ON 1 = 1". This should be replaced
+   * with something that checks the new dialect method supportsDataType(bool).
    *
-   * @param join
-   * @param pos
+   * @param join the join to convert
+   * @param pos parser position
    */
   public static void convertJoinOnToExpression(SqlJoin join, SqlParserPos pos) {
     if (join.getConditionType() == JoinConditionType.ON
