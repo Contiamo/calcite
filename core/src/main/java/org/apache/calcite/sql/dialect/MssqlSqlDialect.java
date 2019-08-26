@@ -83,17 +83,7 @@ public class MssqlSqlDialect extends SqlDialect {
       case JOIN:
         // MS SQL does not support boolean literals. "ON TRUE" is converted to "ON 1 = 1".
         SqlJoin join = (SqlJoin) call;
-        if (join.getConditionType() == JoinConditionType.ON
-            && join.getCondition().getKind() == SqlKind.LITERAL) {
-          SqlParserPos pos = call.getParserPosition();
-          String compareTo = (((SqlLiteral) join.getCondition()).getValue().equals(true))
-              ? "1" : "0";
-          SqlNode op = new SqlBasicCall(SqlStdOperatorTable.EQUALS, new SqlNode[]{
-              SqlLiteral.createExactNumeric("1", pos),
-              SqlLiteral.createExactNumeric(compareTo, pos)
-          }, pos);
-          join.setOperand(5, op);
-        }
+        SqlUtil.convertJoinOnToExpression(join, call.getParserPosition());
         super.unparseCall(writer, call, leftPrec, rightPrec);
         break;
 

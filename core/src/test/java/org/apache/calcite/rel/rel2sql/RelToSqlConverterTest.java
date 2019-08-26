@@ -1298,7 +1298,7 @@ public class RelToSqlConverterTest {
 
   @Test public void testFullJoinOnTrueCondition() {
     String query = "select * from \"department\"\n"
-        + "FULL JOIN \"employee\" ON true";
+        + "FULL JOIN \"employee\" ON TRUE";
     String expected = "SELECT *\n"
         + "FROM \"foodmart\".\"department\"\n"
         + "FULL JOIN \"foodmart\".\"employee\" ON TRUE";
