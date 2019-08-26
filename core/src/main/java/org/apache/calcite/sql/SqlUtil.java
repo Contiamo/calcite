@@ -391,7 +391,7 @@ public abstract class SqlUtil {
   /**
    * If a join uses ON with a boolean literal convert it to an expression.
    *
-   * <p>Convert "a JOIN b ON TRUE" with "a JOIN b ON 1 = 1".
+   * <p>Convert "a JOIN b ON TRUE" to "a JOIN b ON 1 = 1".
    *
    * @param join
    * @param pos
