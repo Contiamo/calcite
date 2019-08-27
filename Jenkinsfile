@@ -23,9 +23,9 @@ pipeline {
                 ]
             }
         }
-        stage('Maven Compile'){
+        stage('Maven Install'){
         	steps {
-        		sh 'mvn compile'
+        		sh 'mvn install -DskipTests=true'
         	}
         }
         stage('Maven Tests'){
