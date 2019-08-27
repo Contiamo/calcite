@@ -1082,25 +1082,27 @@ public class RelToSqlConverterTest {
   }
 
   @Test public void testCountOnGroupBy() {
-    String query = "select count(*) from (select \"city\", count(*) from \"foodmart\".\"customer\" group by \"city\")";
-    String expected = "SELECT COUNT(*)\n"
-      + "FROM (SELECT 0 AS \"$f0\"\n"
-      + "FROM \"foodmart\".\"customer\"\n"
-      + "GROUP BY \"city\") AS \"t1\"";
-    String oracle = "SELECT COUNT(*)\n"
-      + "FROM (SELECT 0 \"$f0\"\n"
-      + "FROM \"foodmart\".\"customer\"\n"
-      + "GROUP BY \"city\") \"t1\"";
+    String query = "select count(*) from (\n"
+        + "select \"city\", count(*) from \"foodmart\".\"customer\" group by \"city\")";
+    final String expected = "SELECT COUNT(*)\n"
+        + "FROM (SELECT 0 AS \"$f0\"\n"
+        + "FROM \"foodmart\".\"customer\"\n"
+        + "GROUP BY \"city\") AS \"t1\"";
+    final String oracle = "SELECT COUNT(*)\n"
+        + "FROM (SELECT 0 \"$f0\"\n"
+        + "FROM \"foodmart\".\"customer\"\n"
+        + "GROUP BY \"city\") \"t1\"";
     sql(query).ok(expected).withOracle().ok(oracle);
   }
 
   @Test public void testCountOnConstantProjectWithGroupBy() {
-    String query = "select count(*) from (select 0 from \"foodmart\".\"customer\" group by \"city\")";
-    String expected = "SELECT COUNT(*)\n"
+    String query = "select count(*) from (\n"
+        + "select 0 from \"foodmart\".\"customer\" group by \"city\")";
+    final String expected = "SELECT COUNT(*)\n"
         + "FROM (SELECT 0 AS \"$f0\"\n"
         + "FROM \"foodmart\".\"customer\"\n"
         + "GROUP BY \"city\") AS \"t1\"";
-    String oracle = "SELECT COUNT(*)\n"
+    final String oracle = "SELECT COUNT(*)\n"
         + "FROM (SELECT 0 \"$f0\"\n"
         + "FROM \"foodmart\".\"customer\"\n"
         + "GROUP BY \"city\") \"t1\"";
