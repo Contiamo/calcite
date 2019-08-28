@@ -1064,16 +1064,18 @@ public abstract class SqlImplementor {
         }
       }
       if (rel instanceof Aggregate) {
-        boolean hasNestedAggs = hasNestedAggregations((Aggregate) rel);
-        // Dialects that support nested aggregations can avoid the need for a sub-
-        // select in the case where an aggregate function is nested below. However,
-        // those dialects need a sub-select when there is a nested group by without
-        // aggregate function.
-        // Other dialects always need a sub-select if there is either a nested group
-        // by or aggregate.
-        if ((dialect.supportsNestedAggregations() && hasGroup() && !hasNestedAggs)
-            || (!dialect.supportsNestedAggregations() && (hasGroup() || hasNestedAggs))) {
-          needNew = true;
+        if (dialect.supportsNestedAggregations()) {
+          // Dialects that support nested aggregations can avoid the need for a sub-
+          // select in the case where an aggregate function is nested below. However,
+          // those dialects need a sub-select when there is a nested group by without
+          // aggregate function.
+          if (this.clauses.contains(Clause.GROUP_BY) && !hasNestedAggregations((Aggregate) rel))
+              needNew = true;
+        } else {
+          // Other dialects always need a sub-select if there is either a nested group
+          // by or aggregate.
+          if (this.clauses.contains(Clause.GROUP_BY) || hasNestedAggregations((Aggregate) rel))
+              needNew = true;
         }
       }
 
@@ -1118,16 +1120,6 @@ public abstract class SqlImplementor {
       }
       return new Builder(rel, clauseList, select, newContext,
           needNew ? null : aliases);
-    }
-
-    private boolean hasGroup() {
-      if (node instanceof SqlSelect) {
-        final SqlSelect select = (SqlSelect) node;
-        if (select.getGroup() != null && !SqlNodeList.isEmptyList(select.getGroup())) {
-          return true;
-        }
-      }
-      return false;
     }
 
     private boolean hasNestedAggregations(Aggregate rel) {
