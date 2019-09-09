@@ -28,6 +28,7 @@ limitations under the License.
   <artifactId>calcite</artifactId>
   <packaging>pom</packaging>
   <version>1.21.0-c5-SNAPSHOT</version>
+
   <!-- More project information. -->
   <name>Calcite</name>
   <description>Calcite is a dynamic data management framework</description>
