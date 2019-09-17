@@ -6121,6 +6121,60 @@ public class RelOptRulesTest extends RelOptTestBase {
     checkPlanning(FilterJoinRule.FILTER_ON_JOIN, query);
   }
 
+  /** Tests that ProjectToWindowRule sets proper collation on LogicalWindow
+   * when collation trait is enabled
+   */
+  @Test public void testWindowOnSortedInput() {
+    // Create a customized test with RelCollation trait in the test cluster.
+    Tester tester = new TesterImpl(getDiffRepos(), true, true, false, false, false,
+            null, null) {
+      @Override public RelOptPlanner createPlanner() {
+        return new MockRelOptPlanner(Contexts.empty()) {
+          @Override public List<RelTraitDef> getRelTraitDefs() {
+            return ImmutableList.of(RelCollationTraitDef.INSTANCE);
+          }
+          @Override public RelTraitSet emptyTraitSet() {
+            return RelTraitSet.createEmpty().plus(
+                    RelCollationTraitDef.INSTANCE.getDefault());
+          }
+        };
+      }
+    };
+
+    final HepProgram preProgram = new HepProgramBuilder()
+            .addRuleInstance(SortProjectTransposeRule.INSTANCE)
+            .build();
+    final HepProgram program = HepProgram.builder()
+            .addRuleInstance(ProjectToWindowRule.PROJECT)
+            .build();
+
+    final String sql = "select mgr, deptno, sum(sal) over (partition by deptno)\n"
+            + "from emp\n"
+            + "order by mgr, deptno";
+
+    RelNode r = checkPlanning(tester, preProgram, new HepPlanner(program), sql);
+    RelCollation c = r.getInput(0).getTraitSet().getTrait(RelCollationTraitDef.INSTANCE);
+    assertEquals("Collation is incorrect", "[3, 7]", c.toString());
+  }
+
+  /** Tests that ProjectToWindowRule works with ordered input but disabled
+   * collation trait.
+   */
+  @Test public void testWindowOnSortedInput1() {
+    final HepProgram preProgram = new HepProgramBuilder()
+            .addRuleInstance(SortProjectTransposeRule.INSTANCE)
+            .build();
+    final HepProgram program = HepProgram.builder()
+            .addRuleInstance(ProjectToWindowRule.PROJECT)
+            .build();
+
+    final String sql = "select mgr, deptno, sum(sal) over (partition by deptno)\n"
+            + "from emp\n"
+            + "order by mgr, deptno";
+
+    checkPlanning(tester, preProgram, new HepPlanner(program), sql);
+  }
+
   /**
    * Custom implementation of {@link Filter} for use
    * in test case to verify that {@link FilterMultiJoinMergeRule}
