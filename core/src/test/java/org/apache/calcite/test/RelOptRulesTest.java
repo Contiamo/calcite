@@ -5581,6 +5581,9 @@ public class RelOptRulesTest extends RelOptTestBase {
         .withPre(preProgram).with(program).check();
   }
 
+  /** Tests that ProjectToWindowRule sets proper collation on LogicalWindow
+   * when collation trait is enabled
+   */
   @Test public void testWindowOnSortedInput() {
     // Create a customized test with RelCollation trait in the test cluster.
     Tester tester = new TesterImpl(getDiffRepos(), true, true, false, false,
@@ -5614,6 +5617,9 @@ public class RelOptRulesTest extends RelOptTestBase {
     assertEquals("Collation is incorrect", "[3, 7]", c.toString());
   }
 
+  /** Tests that ProjectToWindowRule works with ordered input but disabled
+   * collation trait.
+   */
   @Test public void testWindowOnSortedInput1() {
     final HepProgram preProgram = new HepProgramBuilder()
             .addRuleInstance(SortProjectTransposeRule.INSTANCE)
