@@ -25,7 +25,7 @@ import java.util.HashSet;
 public class LimitedHashSet<E> extends HashSet<E> {
 
   private static float load = 0.9f;
-  private static int limit = Math.round((1 << 21) / load) + 1;   //21 = 2.3 Mill
+  private static int limit = Math.round((1 << 21) * load) - 1;   //21 = 2 Mill * .9 = 1.88 Mill
   private static int initCapacity = 1 << 10;
 
   /**
