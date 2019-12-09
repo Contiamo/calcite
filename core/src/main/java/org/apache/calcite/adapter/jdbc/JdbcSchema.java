@@ -353,7 +353,7 @@ public class JdbcSchema implements Schema {
     return tableMap;
   }
 
-  RelProtoDataType getRelDataType(String catalogName, String schemaName,
+  public RelProtoDataType getRelDataType(String catalogName, String schemaName,
       String tableName) throws SQLException {
     Connection connection = null;
     try {
