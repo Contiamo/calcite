@@ -40,6 +40,15 @@ public class SqlBasicCall extends SqlCall {
   }
 
   public SqlBasicCall(
+          SqlOperator operator,
+          SqlNode[] operands,
+          SqlParserPos pos,
+          boolean expanded,
+          SqlLiteral functionQualifier) {
+    this(operator, operands, pos, expanded, false, functionQualifier);
+  }
+
+  public SqlBasicCall(
       SqlOperator operator,
       SqlNode[] operands,
       SqlParserPos pos,
