@@ -47,17 +47,21 @@ public class JdbcAdapterTest {
    * same time. */
   private static final ReentrantLock LOCK = new ReentrantLock();
 
+
+
+
+
   /** VALUES is not pushed down, currently. */
   @Test public void testValuesPlan() {
     final String sql = "select * from \"days\", (values 1, 2) as t(c)";
     final String explain = "PLAN="
-        + "EnumerableCalc(expr#0..2=[{inputs}], day=[$t1], week_day=[$t2], C=[$t0])\n"
-        + "  EnumerableHashJoin(condition=[true], joinType=[inner])\n"
-        + "    EnumerableValues(tuples=[[{ 1 }, { 2 }]])\n"
-        + "    JdbcToEnumerableConverter\n"
-        + "      JdbcTableScan(table=[[foodmart, days]])";
+        + "JdbcToEnumerableConverter\n"
+        + "  JdbcJoin(condition=[true], joinType=[inner])\n"
+        + "    JdbcTableScan(table=[[foodmart, days]])\n"
+        + "    JdbcValues(tuples=[[{ 1 }, { 2 }]])\n";
     final String jdbcSql = "SELECT *\n"
-        + "FROM \"foodmart\".\"days\"";
+            + "FROM \"foodmart\".\"days\",\n"
+            + "(VALUES  (1),\n (2)) AS \"t\" (\"C\")";
     CalciteAssert.model(JdbcTest.FOODMART_MODEL)
         .query(sql)
         .explainContains(explain)
