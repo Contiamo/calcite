@@ -51,10 +51,8 @@ import org.apache.calcite.rel.core.Union;
 import org.apache.calcite.rel.core.Values;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
-import org.apache.calcite.rel.rel2sql.SqlImplementor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexMultisetUtil;
 import org.apache.calcite.rex.RexNode;
@@ -304,9 +302,6 @@ public class JdbcRules {
         }
         newInputs.add(input);
       }
-      if (convertInputTraits && !canJoinOnCondition(join.getCondition())) {
-        return null;
-      }
       try {
         return new JdbcJoin(
             join.getCluster(),
@@ -319,50 +314,6 @@ public class JdbcRules {
       } catch (InvalidRelException e) {
         LOGGER.debug(e.toString());
         return null;
-      }
-    }
-
-    /**
-     * Returns whether a condition is supported by {@link JdbcJoin}.
-     *
-     * <p>Corresponds to the capabilities of
-     * {@link SqlImplementor#convertConditionToSqlNode}.
-     *
-     * @param node Condition
-     * @return Whether condition is supported
-     */
-    private boolean canJoinOnCondition(RexNode node) {
-      final List<RexNode> operands;
-      if (node.isAlwaysTrue() || node.isAlwaysFalse()) {
-        return true;
-      }
-      switch (node.getKind()) {
-      case AND:
-      case OR:
-        operands = ((RexCall) node).getOperands();
-        for (RexNode operand : operands) {
-          if (!canJoinOnCondition(operand)) {
-            return false;
-          }
-        }
-        return true;
-
-      case EQUALS:
-      case IS_NOT_DISTINCT_FROM:
-      case NOT_EQUALS:
-      case GREATER_THAN:
-      case GREATER_THAN_OR_EQUAL:
-      case LESS_THAN:
-      case LESS_THAN_OR_EQUAL:
-        operands = ((RexCall) node).getOperands();
-        if ((operands.get(0) instanceof RexInputRef)
-            && (operands.get(1) instanceof RexInputRef)) {
-          return true;
-        }
-        // fall through
-
-      default:
-        return false;
       }
     }
   }
