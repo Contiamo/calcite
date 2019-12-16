@@ -282,7 +282,9 @@ public abstract class SqlImplementor {
           leftContext.implementor().joinContext(leftContext, rightContext);
       return joinContext.toSql(null, node);
     default:
-      throw new AssertionError(node);
+      joinContext =
+          leftContext.implementor().joinContext(leftContext, rightContext);
+      return joinContext.toSql(null, node);
     }
   }
 
