@@ -107,19 +107,19 @@ public class MaterializationService {
       return null;
     }
 
-    if (suggestedTableSchemaPath == null) {
-      suggestedTableSchemaPath = schema.path(null);
-    }
-    final CalciteSchema tableSchema = Schemas.subSchema(schema, suggestedTableSchemaPath);
+    final CalciteSchema effectiveSchema = suggestedTableSchemaPath != null
+            ? Schemas.subSchema(schema, suggestedTableSchemaPath)
+            : schema;
+
     final CalciteConnection connection =
         CalciteMetaImpl.connect(schema.root(), null);
     CalciteSchema.TableEntry tableEntry;
     // If the user says the materialization exists, first try to find a table
     // with the name and if none can be found, lookup a view in the schema
     if (existing) {
-      tableEntry = tableSchema.getTable(suggestedTableName, true);
+      tableEntry = effectiveSchema.getTable(suggestedTableName, true);
       if (tableEntry == null) {
-        tableEntry = tableSchema.getTableBasedOnNullaryFunction(suggestedTableName, true);
+        tableEntry = effectiveSchema.getTableBasedOnNullaryFunction(suggestedTableName, true);
       }
     } else {
       tableEntry = null;
