@@ -142,6 +142,32 @@ public class BabelParserTest extends SqlParserTest {
   }
 
   /**
+   * Support Postgres-like FROM syntax.
+   *
+   * In Postgres a parenthesised expression in the from clause doesn't have to start
+   * with a SELECT keyword; but cannot contain ordering and limits like
+   * normal subqueries.
+   */
+  @Test public void testPostgresSubqueryJoin() {
+    final String sql = "select * from ("
+        + "emp as e join dept as d on emp.deptno = dept.deptno) order by deptno limit 10";
+    final String expected = "SELECT *\n"
+        + "FROM (SELECT *\n"
+        + "FROM `EMP` AS `E`\n"
+        + "INNER JOIN `DEPT` AS `D` ON (`EMP`.`DEPTNO` = `DEPT`.`DEPTNO`))\n"
+        + "ORDER BY `DEPTNO`\n"
+        + "FETCH NEXT 10 ROWS ONLY";
+    sql(sql).ok(expected);
+
+    final String invalidOrder = "select * from ("
+        + "emp as e join dept as d on emp.deptno = dept.deptno ^order^ by deptno)";
+    checkFails(invalidOrder,"(?s)Encountered \"order\" at .*");
+    final String invalidLimit = "select * from ("
+        + "emp as e join dept as d on emp.deptno = dept.deptno ^limit^ 10)";
+    checkFails(invalidLimit,"(?s)Encountered \"limit\" at .*");
+  }
+
+  /**
    * This is a failure test making sure the LOOKAHEAD for WHEN clause is 2 in Babel, where
    * in core parser this number is 1.
    *

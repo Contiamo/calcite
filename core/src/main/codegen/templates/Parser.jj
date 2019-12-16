@@ -1878,6 +1878,22 @@ SqlNode TableRef2(boolean lateral) :
         ]
     |
         LOOKAHEAD(2)
+        <LPAREN>
+        {
+            s = span();
+            final SqlNode fromClause;
+        }
+        fromClause = FromClause()
+        <RPAREN>
+        {
+            final List<SqlNode> selectList = new ArrayList<SqlNode>();
+            selectList.add(SqlIdentifier.star(getPos()));
+            return new SqlSelect(s.end(this), null,
+                new SqlNodeList(selectList, Span.of(selectList).pos()),
+                fromClause, null, null, null, null, null, null, null);
+        }
+    |
+        LOOKAHEAD(2)
         [ <LATERAL> { lateral = true; } ]
         tableRef = ParenthesizedExpression(ExprContext.ACCEPT_QUERY)
         over = TableOverOpt()
