@@ -40,11 +40,9 @@ LogicalProject(EXPR$0=[CAST(OR(AND(IS NOT NULL($7), <>($1, 0)), AND(<($2, $1), n
       LogicalJoin(condition=[true], joinType=[inner])
         LogicalValues(tuples=[[{ true }]])
         LogicalAggregate(group=[{}], agg#0=[COUNT()], agg#1=[COUNT($0, $1)])
-          LogicalProject(EXPR$0=[1], EXPR$1=[2], $f2=[true])
-            LogicalValues(tuples=[[{ true, true }]])
-    LogicalAggregate(group=[{0, 1}], agg#0=[MIN($2)])
-      LogicalProject(EXPR$0=[1], EXPR$1=[2], $f2=[true])
-        LogicalValues(tuples=[[{ true, true }]])
+          LogicalValues(tuples=[[{ true, true }]])
+    LogicalProject(EXPR$0=[1], EXPR$1=[2], $f2=[true])
+      LogicalValues(tuples=[[{ true, true }]])
 ]]>
         </Resource>
     </TestCase>
