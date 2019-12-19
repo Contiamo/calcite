@@ -2303,17 +2303,30 @@ public class SqlParserTest {
   }
 
   @Test public void testJoinOnParentheses() {
-    if (!Bug.TODO_FIXED) {
-      return;
-    }
     check(
         "select * from a\n"
             + " left join (b join c as c1 on 1 = 1) on 2 = 2\n"
             + "where 3 = 3",
         "SELECT *\n"
             + "FROM `A`\n"
-            + "LEFT JOIN (`B` INNER JOIN `C` AS `C1` ON (1 = 1)) ON (2 = 2)\n"
+            + "LEFT JOIN (`B`\n"
+            + "INNER JOIN `C` AS `C1` ON (1 = 1)) ON (2 = 2)\n"
             + "WHERE (3 = 3)");
+  }
+
+  @Test public void testJoinOnParentheses2() {
+    check(
+        "select * from (a natural join (b right join b1 on 1 = 1) join c on 2 = 2) \n"
+            + " left join (d join e as c1 on 3 = 3) on 4 = 4\n"
+            + "where 5 = 5",
+        "SELECT *\n"
+            + "FROM `A`\n"
+            + "NATURAL INNER JOIN (`B`\n"
+            + "RIGHT JOIN `B1` ON (1 = 1)\n"
+            + "INNER JOIN `C` ON (2 = 2))\n"
+            + "LEFT JOIN (`D`\n"
+            + "INNER JOIN `E` AS `C1` ON (3 = 3)) ON (4 = 4)\n"
+            + "WHERE (5 = 5)");
   }
 
   /**
@@ -2606,8 +2619,8 @@ public class SqlParserTest {
         "SELECT *\n"
             + "FROM `A`\n"
             + "INNER JOIN `B` USING (`X`),\n"
-            + "`C`\n"
-            + "INNER JOIN `D` USING (`Y`)");
+            + "(`C`\n"
+            + "INNER JOIN `D` USING (`Y`))");
   }
 
   @Test public void testMixedStar() {
@@ -3283,15 +3296,16 @@ public class SqlParserTest {
         "select 1 from ^values^('x')",
         "(?s)Encountered \"values\" at line 1, column 15\\.\n"
             + "Was expecting one of:\n"
-            + "    \"LATERAL\" \\.\\.\\.\n"
-            + "    \"TABLE\" \\.\\.\\.\n"
-            + "    \"UNNEST\" \\.\\.\\.\n"
             + "    <IDENTIFIER> \\.\\.\\.\n"
             + "    <QUOTED_IDENTIFIER> \\.\\.\\.\n"
             + "    <BACK_QUOTED_IDENTIFIER> \\.\\.\\.\n"
             + "    <BRACKET_QUOTED_IDENTIFIER> \\.\\.\\.\n"
             + "    <UNICODE_QUOTED_IDENTIFIER> \\.\\.\\.\n"
-            + "    \"\\(\" \\.\\.\\.\n.*");
+            + "    \"LATERAL\" \\.\\.\\.\n"
+            + "    \"\\(\" \\.\\.\\.\n"
+            + "    \"UNNEST\" \\.\\.\\.\n"
+            + "    \"TABLE\" \\.\\.\\.\n"
+            + ".*");
   }
 
   @Test public void testEmptyValues() {
