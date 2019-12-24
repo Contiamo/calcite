@@ -2347,8 +2347,8 @@ public class SqlParserTest {
         "SELECT *\n"
             + "FROM `A`\n"
             + "NATURAL INNER JOIN (`B`\n"
-            + "RIGHT JOIN `B1` ON (1 = 1)\n"
-            + "INNER JOIN `C` ON (2 = 2))\n"
+            + "RIGHT JOIN `B1` ON (1 = 1))\n"
+            + "INNER JOIN `C` ON (2 = 2)\n"
             + "LEFT JOIN (`D`\n"
             + "INNER JOIN `E` AS `C1` ON (3 = 3)) ON (4 = 4)\n"
             + "WHERE (5 = 5)");
@@ -2358,16 +2358,14 @@ public class SqlParserTest {
    * Same as {@link #testJoinOnParentheses()} but fancy aliases.
    */
   @Test public void testJoinOnParenthesesPlus() {
-    if (!Bug.TODO_FIXED) {
-      return;
-    }
     check(
         "select * from a\n"
             + " left join (b as b1 (x, y) join (select * from c) c1 on 1 = 1) on 2 = 2\n"
             + "where 3 = 3",
         "SELECT *\n"
             + "FROM `A`\n"
-            + "LEFT JOIN (`B` AS `B1` (`X`, `Y`) INNER JOIN (SELECT *\n"
+            + "LEFT JOIN (`B` AS `B1` (`X`, `Y`)\n"
+            + "INNER JOIN (SELECT *\n"
             + "FROM `C`) AS `C1` ON (1 = 1)) ON (2 = 2)\n"
             + "WHERE (3 = 3)");
   }
@@ -2437,26 +2435,32 @@ public class SqlParserTest {
         "(?s).*Encountered \"inner outer\" at line 1, column 17.*");
   }
 
-  @Ignore
+//  @Ignore
   @Test public void testJoinAssociativity() {
     // joins are left-associative
     // 1. no parens needed
     check(
         "select * from (a natural left join b) left join c on b.c1 = c.c1",
         "SELECT *\n"
-            + "FROM (`A` NATURAL LEFT JOIN `B`) LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)\n");
+            + "FROM `A`\n"
+            + "NATURAL LEFT JOIN `B`\n"
+            + "LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)");
 
     // 2. parens needed
     check(
         "select * from a natural left join (b left join c on b.c1 = c.c1)",
         "SELECT *\n"
-            + "FROM (`A` NATURAL LEFT JOIN `B`) LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)\n");
+            + "FROM `A`\n"
+            + "NATURAL LEFT JOIN (`B`\n"
+            + "LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`))");
 
     // 3. same as 1
     check(
         "select * from a natural left join b left join c on b.c1 = c.c1",
         "SELECT *\n"
-            + "FROM (`A` NATURAL LEFT JOIN `B`) LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)\n");
+            + "FROM `A`\n"
+            + "NATURAL LEFT JOIN `B`\n"
+            + "LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)");
   }
 
   // Note: "select * from a natural cross join b" is actually illegal SQL

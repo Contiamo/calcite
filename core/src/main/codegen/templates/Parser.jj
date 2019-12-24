@@ -236,32 +236,32 @@ public class ${parser.class} extends SqlAbstractParserImpl
             Span.of(table, extendList).pos(), table, extendList);
     }
 
-    boolean isJoin(int[] pos) {
+    Pair<Boolean, Integer> isJoin(int pos) {
         boolean joinFound = false;
-        if (getToken(pos[0]).kind == LPAREN) {
-            pos[0]++;
-            return (isJoin(pos) && getToken(pos[0]).kind == RPAREN);
+        if (getToken(pos).kind == LPAREN) {
+            Pair<Boolean, Integer> result = isJoin(pos + 1);
+            return Pair.of(result.left && getToken(result.right).kind == RPAREN, result.right);
         } else {
             int numParens = 0;
             while (true) {
-                switch (getToken(pos[0]).kind) {
+                switch (getToken(pos).kind) {
                 case EOF:
-                    return joinFound;
+                    return Pair.of(joinFound, pos);
                 case LPAREN:
                     numParens++;
                     break;
                 case RPAREN:
                     if (numParens > 0) numParens--;
-                    else return joinFound;
+                    else return Pair.of(joinFound, pos);
                     break;
                 case SELECT:
-                    if (numParens == 0) return false;
+                    if (numParens == 0) return Pair.of(false, pos);
                 case JOIN:
                 case APPLY:
                     if (numParens == 0) joinFound = true; // we encountered join at top level
                     // else it's some internal join which we are not interested in
                 }
-                pos[0]++;
+                pos++;
             }
         }
     }
@@ -1765,6 +1765,22 @@ SqlNode FromClause() :
     }
 }
 
+SqlNode JoinElement() :
+{
+    SqlNode e;
+}
+{
+    (
+        LOOKAHEAD({ getToken(1).kind == LPAREN && isJoin(2).left })
+        <LPAREN> e = FromElement() <RPAREN>
+    |
+        e = TableRef()
+    )
+    {
+        return e;
+    }
+}
+
 SqlNode FromElement() :
 {
     SqlNode e, e2, condition;
@@ -1773,12 +1789,7 @@ SqlNode FromElement() :
     SqlParserPos pos;
 }
 {
-    (
-        LOOKAHEAD({ getToken(1).kind == LPAREN && isJoin(new int[]{2}) })
-        <LPAREN> e = FromElement() <RPAREN>
-    |
-        e = TableRef()
-    )
+    e = JoinElement()
     (
         LOOKAHEAD(2)
         (
@@ -1796,7 +1807,7 @@ SqlNode FromElement() :
             LOOKAHEAD(3)
             natural = Natural()
             joinType = JoinType()
-            e2 = FromElement()
+            e2 = JoinElement()
             (
                 <ON> {
                     joinConditionType = JoinConditionType.ON.symbol(getPos());
