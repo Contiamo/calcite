@@ -234,6 +234,37 @@ public class ${parser.class} extends SqlAbstractParserImpl
         return SqlStdOperatorTable.EXTEND.createCall(
             Span.of(table, extendList).pos(), table, extendList);
     }
+
+    Pair<Boolean, Integer> isJoin(int pos) {
+        boolean joinFound = false;
+        if (getToken(pos).kind == LPAREN) {
+            Pair<Boolean, Integer> result = isJoin(pos + 1);
+            return Pair.of(result.left && getToken(result.right).kind == RPAREN, result.right);
+        } else {
+            int numParens = 0;
+            while (true) {
+                switch (getToken(pos).kind) {
+                case EOF:
+                    return Pair.of(joinFound, pos);
+                case LPAREN:
+                    numParens++;
+                    break;
+                case RPAREN:
+                    if (numParens > 0) numParens--;
+                    else return Pair.of(joinFound, pos);
+                    break;
+                case SELECT:
+                    if (numParens == 0) return Pair.of(false, pos);
+                case JOIN:
+                case APPLY:
+                    if (numParens == 0) joinFound = true; // we encountered join at top level
+                    // else it's some internal join which we are not interested in
+                }
+                pos++;
+            }
+        }
+    }
+
 }
 
 PARSER_END(${parser.class})
@@ -1710,13 +1741,54 @@ SqlNode JoinTable(SqlNode e) :
  */
 SqlNode FromClause() :
 {
+    SqlNode e, e2;
+    SqlLiteral joinType;
+}
+{
+    e = FromElement()
+    (
+        LOOKAHEAD(2)
+        <COMMA> { joinType = JoinType.COMMA.symbol(getPos()); }
+        e2 = FromElement() {
+            e = new SqlJoin(joinType.getParserPosition(),
+                e,
+                SqlLiteral.createBoolean(false, joinType.getParserPosition()),
+                joinType,
+                e2,
+                JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
+                null);
+        }
+    )*
+    {
+        return e;
+    }
+}
+
+SqlNode JoinElement() :
+{
+    SqlNode e;
+}
+{
+    (
+        LOOKAHEAD({ getToken(1).kind == LPAREN && isJoin(2).left })
+        <LPAREN> e = FromElement() <RPAREN>
+    |
+        e = TableRef()
+    )
+    {
+        return e;
+    }
+}
+
+SqlNode FromElement() :
+{
     SqlNode e, e2, condition;
     SqlLiteral natural, joinType, joinConditionType;
     SqlNodeList list;
     SqlParserPos pos;
 }
 {
-    e = TableRef()
+    e = JoinElement()
     (
         LOOKAHEAD(2)
         (
@@ -1734,7 +1806,7 @@ SqlNode FromClause() :
             LOOKAHEAD(3)
             natural = Natural()
             joinType = JoinType()
-            e2 = TableRef()
+            e2 = JoinElement()
             (
                 <ON> {
                     joinConditionType = JoinConditionType.ON.symbol(getPos());
@@ -1773,22 +1845,6 @@ SqlNode FromClause() :
                 }
             )
         |
-            // NOTE jvs 6-Feb-2004:  See comments at top of file for why
-            // hint is necessary here.  I had to use this special semantic
-            // lookahead form to get JavaCC to shut up, which makes
-            // me even more uneasy.
-            //LOOKAHEAD({true})
-            <COMMA> { joinType = JoinType.COMMA.symbol(getPos()); }
-            e2 = TableRef() {
-                e = new SqlJoin(joinType.getParserPosition(),
-                    e,
-                    SqlLiteral.createBoolean(false, joinType.getParserPosition()),
-                    joinType,
-                    e2,
-                    JoinConditionType.NONE.symbol(SqlParserPos.ZERO),
-                    null);
-            }
-        |
             <CROSS> { joinType = JoinType.CROSS.symbol(getPos()); } <APPLY>
             e2 = TableRef2(true) {
                 if (!this.conformance.isApplyAllowed()) {
@@ -1817,7 +1873,7 @@ SqlNode FromClause() :
                     SqlLiteral.createBoolean(true, joinType.getParserPosition()));
             }
         )
-    )*
+    ) *
     {
         return e;
     }

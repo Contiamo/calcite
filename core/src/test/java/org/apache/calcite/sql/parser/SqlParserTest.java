@@ -2328,33 +2328,44 @@ public class SqlParserTest {
   }
 
   @Test public void testJoinOnParentheses() {
-    if (!Bug.TODO_FIXED) {
-      return;
-    }
     check(
         "select * from a\n"
             + " left join (b join c as c1 on 1 = 1) on 2 = 2\n"
             + "where 3 = 3",
         "SELECT *\n"
             + "FROM `A`\n"
-            + "LEFT JOIN (`B` INNER JOIN `C` AS `C1` ON (1 = 1)) ON (2 = 2)\n"
+            + "LEFT JOIN (`B`\n"
+            + "INNER JOIN `C` AS `C1` ON (1 = 1)) ON (2 = 2)\n"
             + "WHERE (3 = 3)");
+  }
+
+  @Test public void testJoinOnParentheses2() {
+    check(
+        "select * from (a natural join (b right join b1 on 1 = 1) join c on 2 = 2) \n"
+            + " left join (d join e as c1 on 3 = 3) on 4 = 4\n"
+            + "where 5 = 5",
+        "SELECT *\n"
+            + "FROM `A`\n"
+            + "NATURAL INNER JOIN (`B`\n"
+            + "RIGHT JOIN `B1` ON (1 = 1))\n"
+            + "INNER JOIN `C` ON (2 = 2)\n"
+            + "LEFT JOIN (`D`\n"
+            + "INNER JOIN `E` AS `C1` ON (3 = 3)) ON (4 = 4)\n"
+            + "WHERE (5 = 5)");
   }
 
   /**
    * Same as {@link #testJoinOnParentheses()} but fancy aliases.
    */
   @Test public void testJoinOnParenthesesPlus() {
-    if (!Bug.TODO_FIXED) {
-      return;
-    }
     check(
         "select * from a\n"
             + " left join (b as b1 (x, y) join (select * from c) c1 on 1 = 1) on 2 = 2\n"
             + "where 3 = 3",
         "SELECT *\n"
             + "FROM `A`\n"
-            + "LEFT JOIN (`B` AS `B1` (`X`, `Y`) INNER JOIN (SELECT *\n"
+            + "LEFT JOIN (`B` AS `B1` (`X`, `Y`)\n"
+            + "INNER JOIN (SELECT *\n"
             + "FROM `C`) AS `C1` ON (1 = 1)) ON (2 = 2)\n"
             + "WHERE (3 = 3)");
   }
@@ -2424,26 +2435,31 @@ public class SqlParserTest {
         "(?s).*Encountered \"inner outer\" at line 1, column 17.*");
   }
 
-  @Ignore
   @Test public void testJoinAssociativity() {
     // joins are left-associative
     // 1. no parens needed
     check(
         "select * from (a natural left join b) left join c on b.c1 = c.c1",
         "SELECT *\n"
-            + "FROM (`A` NATURAL LEFT JOIN `B`) LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)\n");
+            + "FROM `A`\n"
+            + "NATURAL LEFT JOIN `B`\n"
+            + "LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)");
 
     // 2. parens needed
     check(
         "select * from a natural left join (b left join c on b.c1 = c.c1)",
         "SELECT *\n"
-            + "FROM (`A` NATURAL LEFT JOIN `B`) LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)\n");
+            + "FROM `A`\n"
+            + "NATURAL LEFT JOIN (`B`\n"
+            + "LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`))");
 
     // 3. same as 1
     check(
         "select * from a natural left join b left join c on b.c1 = c.c1",
         "SELECT *\n"
-            + "FROM (`A` NATURAL LEFT JOIN `B`) LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)\n");
+            + "FROM `A`\n"
+            + "NATURAL LEFT JOIN `B`\n"
+            + "LEFT JOIN `C` ON (`B`.`C1` = `C`.`C1`)");
   }
 
   // Note: "select * from a natural cross join b" is actually illegal SQL
@@ -2654,8 +2670,8 @@ public class SqlParserTest {
         "SELECT *\n"
             + "FROM `A`\n"
             + "INNER JOIN `B` USING (`X`),\n"
-            + "`C`\n"
-            + "INNER JOIN `D` USING (`Y`)");
+            + "(`C`\n"
+            + "INNER JOIN `D` USING (`Y`))");
   }
 
   @Test public void testMixedStar() {
@@ -3331,15 +3347,16 @@ public class SqlParserTest {
         "select 1 from ^values^('x')",
         "(?s)Encountered \"values\" at line 1, column 15\\.\n"
             + "Was expecting one of:\n"
-            + "    \"LATERAL\" \\.\\.\\.\n"
-            + "    \"TABLE\" \\.\\.\\.\n"
-            + "    \"UNNEST\" \\.\\.\\.\n"
             + "    <IDENTIFIER> \\.\\.\\.\n"
             + "    <QUOTED_IDENTIFIER> \\.\\.\\.\n"
             + "    <BACK_QUOTED_IDENTIFIER> \\.\\.\\.\n"
             + "    <BRACKET_QUOTED_IDENTIFIER> \\.\\.\\.\n"
             + "    <UNICODE_QUOTED_IDENTIFIER> \\.\\.\\.\n"
-            + "    \"\\(\" \\.\\.\\.\n.*");
+            + "    \"LATERAL\" \\.\\.\\.\n"
+            + "    \"\\(\" \\.\\.\\.\n"
+            + "    \"UNNEST\" \\.\\.\\.\n"
+            + "    \"TABLE\" \\.\\.\\.\n"
+            + ".*");
   }
 
   @Test public void testEmptyValues() {
