@@ -2435,7 +2435,6 @@ public class SqlParserTest {
         "(?s).*Encountered \"inner outer\" at line 1, column 17.*");
   }
 
-//  @Ignore
   @Test public void testJoinAssociativity() {
     // joins are left-associative
     // 1. no parens needed
