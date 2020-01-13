@@ -53,7 +53,9 @@ import com.google.common.collect.ImmutableList;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.sql.Types;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -342,13 +344,48 @@ public interface CalcitePrepare {
         long maxRowCount,
         Bindable<T> bindable,
         Meta.StatementType statementType) {
-      super(columns, sql, parameterList, internalParameters, cursorFactory,
+      super(changeNullTypeToVarchar(columns), sql, parameterList, internalParameters, cursorFactory,
           statementType);
       this.rowType = rowType;
       this.rootSchema = rootSchema;
       this.collationList = collationList;
       this.maxRowCount = maxRowCount;
       this.bindable = bindable;
+    }
+
+    private static List<ColumnMetaData> changeNullTypeToVarchar(List<ColumnMetaData> columns) {
+      ArrayList<ColumnMetaData> newColumns = new ArrayList<>();
+      for (ColumnMetaData column: columns) {
+        ColumnMetaData.AvaticaType newColumnType = column.type;
+        if (column.type.id == 0) {
+          newColumnType = ColumnMetaData.scalar(Types.VARCHAR,
+                  "VARCHAR", ColumnMetaData.Rep.STRING);
+        }
+        ColumnMetaData newColumn = new ColumnMetaData(
+            column.ordinal,
+            column.autoIncrement,
+            column.caseSensitive,
+            column.searchable,
+            column.currency,
+            column.nullable,
+            column.signed,
+            column.displaySize,
+            column.label,
+            column.columnName,
+            column.schemaName,
+            column.precision,
+            column.scale,
+            column.tableName,
+            column.catalogName,
+            newColumnType,
+            column.readOnly,
+            column.writable,
+            column.definitelyWritable,
+            column.columnClassName
+        );
+        newColumns.add(newColumn);
+      }
+      return newColumns;
     }
 
     public Enumerable<T> enumerable(DataContext dataContext) {
