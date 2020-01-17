@@ -7081,6 +7081,19 @@ public class JdbcTest {
     }
   }
 
+  /**
+   * Test if query can return null
+   */
+  @Test public void testSelectNull() throws SQLException {
+    Connection connection =
+            DriverManager.getConnection("jdbc:calcite:");
+    ResultSet resultSet = connection.createStatement().executeQuery("SELECT NULL");
+    assertThat(resultSet.next(), is(true));
+    assertThat(resultSet.getObject(1),
+        equalTo(null));
+    connection.close();
+  }
+
   private static String sums(int n, boolean c) {
     final StringBuilder b = new StringBuilder();
     for (int i = 0; i < n; i++) {
