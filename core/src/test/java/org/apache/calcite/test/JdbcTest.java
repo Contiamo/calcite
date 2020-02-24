@@ -6826,6 +6826,18 @@ public class JdbcTest {
             "X=3; SET=[d, c]");
   }
 
+  @Test public void testDivisionByZero() {
+    CalciteAssert.that()
+        .query("select 1 / 0")
+        .throws_("Error while executing SQL \"select 1 / 0\": / by zero");
+  }
+
+  @Test public void testBadAddition() {
+    CalciteAssert.that()
+        .query("select 1 + 's1'")
+        .throws_("Error while executing SQL \"select 1 + 's1'\": For input string: \"s1\"");
+  }
+
   @Test public void testWithinGroupClause2() {
     final String sql = "select X,\n"
         + " collect(Y) within group (order by Y desc) as SET_1,\n"
