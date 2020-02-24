@@ -42,6 +42,7 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexSimplify;
 import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.runtime.EnumerableExceptionHandler;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.calcite.util.BuiltInMethod;
@@ -250,18 +251,19 @@ public class EnumerableCalc extends Calc implements EnumerableRel {
     builder.add(
         Expressions.return_(
             null,
-            Expressions.new_(
-                BuiltInMethod.ABSTRACT_ENUMERABLE_CTOR.constructor,
-                // TODO: generics
-                //   Collections.singletonList(inputRowType),
-                NO_EXPRS,
-                ImmutableList.<MemberDeclaration>of(
-                    Expressions.methodDecl(
-                        Modifier.PUBLIC,
-                        enumeratorType,
-                        BuiltInMethod.ENUMERABLE_ENUMERATOR.method.getName(),
-                        NO_PARAMS,
-                        Blocks.toFunctionBlock(body))))));
+            EnumerableExceptionHandler.wrapEnumerableExpression(
+                Expressions.new_(
+                    BuiltInMethod.ABSTRACT_ENUMERABLE_CTOR.constructor,
+                    // TODO: generics
+                    //   Collections.singletonList(inputRowType),
+                    NO_EXPRS,
+                    ImmutableList.<MemberDeclaration>of(
+                        Expressions.methodDecl(
+                            Modifier.PUBLIC,
+                            enumeratorType,
+                            BuiltInMethod.ENUMERABLE_ENUMERATOR.method.getName(),
+                            NO_PARAMS,
+                            Blocks.toFunctionBlock(body)))))));
     return implementor.result(physType, builder.toBlock());
   }
 
