@@ -17,23 +17,17 @@
 package org.apache.calcite.sql.fun;
 
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.InferTypes;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlOperandCountRanges;
 import org.apache.calcite.sql.type.SqlTypeUtil;
-
-import java.util.Arrays;
 
 /**
  * An operator describing the <code>~</code> operator.
@@ -75,24 +69,14 @@ public class SqlPosixRegexOperator extends SqlBinaryOperator {
   // ~ Methods ----------------------------------------------------------------
 
   public SqlOperandCountRange getOperandCountRange() {
-    return SqlOperandCountRanges.between(2, 3);
-  }
-
-  public SqlCall createCall(
-      SqlLiteral functionQualifier,
-      SqlParserPos pos,
-      SqlNode... operands) {
-    pos = pos.plusAll(Arrays.asList(operands));
-    operands = Arrays.copyOf(operands, operands.length + 1);
-    operands[operands.length - 1] = SqlLiteral.createBoolean(caseSensitive, SqlParserPos.ZERO);
-    return new SqlBasicCall(this, operands, pos, false, functionQualifier);
+    return SqlOperandCountRanges.of(2);
   }
 
   public boolean checkOperandTypes(
       SqlCallBinding callBinding,
       boolean throwOnFailure) {
     int operandCount = callBinding.getOperandCount();
-    if (operandCount != 2 && operandCount != 3) {
+    if (operandCount != 2) {
       throw new AssertionError(
           "Unexpected number of args to " + callBinding.getCall() + ": " + operandCount);
     }
@@ -107,7 +91,7 @@ public class SqlPosixRegexOperator extends SqlBinaryOperator {
 
     return SqlTypeUtil.isCharTypeComparable(
         callBinding,
-        callBinding.operands().subList(0, 2),
+        callBinding.operands(),
         throwOnFailure);
   }
 
