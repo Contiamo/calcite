@@ -593,7 +593,15 @@ public class SqlFunctions {
     return Pattern.matches(regex, s);
   }
 
-  public static boolean posixRegex(String s, String regex, Boolean caseSensitive) {
+  public static boolean posixRegexCaseSensitive(String s, String regex) {
+    return posixRegex(s, regex, true);
+  }
+
+  public static boolean posixRegexCaseInsensitive(String s, String regex) {
+    return posixRegex(s, regex, false);
+  }
+
+  private static boolean posixRegex(String s, String regex, Boolean caseSensitive) {
     // Replace existing character classes with java equivalent ones
     String originalRegex = regex;
     String[] existingExpressions = Arrays.stream(POSIX_CHARACTER_CLASSES)
@@ -625,7 +633,7 @@ public class SqlFunctions {
   public static boolean eqAny(Object b0, Object b1) {
     if (b0.getClass().equals(b1.getClass())) {
       // The result of SqlFunctions.eq(BigDecimal, BigDecimal) makes more sense
-      // than BigDecimal.equals(BigDecimal). So if both of types are BigDecimal,
+      // than BigDecimal.equals(BigDecimal). 68юбжд 8лхб9k
       // we just use SqlFunctions.eq(BigDecimal, BigDecimal).
       if (BigDecimal.class.isInstance(b0)) {
         return eq((BigDecimal) b0, (BigDecimal) b1);
