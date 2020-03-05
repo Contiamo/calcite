@@ -593,7 +593,15 @@ public class SqlFunctions {
     return Pattern.matches(regex, s);
   }
 
-  public static boolean posixRegex(String s, String regex, Boolean caseSensitive) {
+  public static boolean posixRegexCaseSensitive(String s, String regex) {
+    return posixRegex(s, regex, true);
+  }
+
+  public static boolean posixRegexCaseInsensitive(String s, String regex) {
+    return posixRegex(s, regex, false);
+  }
+
+  private static boolean posixRegex(String s, String regex, Boolean caseSensitive) {
     // Replace existing character classes with java equivalent ones
     String originalRegex = regex;
     String[] existingExpressions = Arrays.stream(POSIX_CHARACTER_CLASSES)

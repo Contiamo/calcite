@@ -234,6 +234,13 @@ public class BabelParserTest extends SqlParserTest {
     };
   }
 
+  @Test public void testRegexMatch() {
+    checkExp("'x' ~ '^x'", "('x' ~ '^x')");
+    checkExp("'x' !~ '^y'", "('x' !~ '^y')");
+    checkExp("'x' ~* '^X'", "('x' ~* '^X')");
+    checkExp("'x' !~* '^Y'", "('x' !~* '^Y')");
+  }
+
   /** Tests parsing PostgreSQL-style "::" cast operator. */
   @Test public void testParseInfixCast()  {
     checkParseInfixCast("integer");

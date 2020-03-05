@@ -41,7 +41,8 @@ import static org.apache.calcite.runtime.SqlFunctions.lesser;
 import static org.apache.calcite.runtime.SqlFunctions.lower;
 import static org.apache.calcite.runtime.SqlFunctions.ltrim;
 import static org.apache.calcite.runtime.SqlFunctions.md5;
-import static org.apache.calcite.runtime.SqlFunctions.posixRegex;
+import static org.apache.calcite.runtime.SqlFunctions.posixRegexCaseInsensitive;
+import static org.apache.calcite.runtime.SqlFunctions.posixRegexCaseSensitive;
 import static org.apache.calcite.runtime.SqlFunctions.regexpReplace;
 import static org.apache.calcite.runtime.SqlFunctions.rtrim;
 import static org.apache.calcite.runtime.SqlFunctions.sha1;
@@ -84,23 +85,23 @@ public class SqlFunctionsTest {
   }
 
   @Test public void testPosixRegex() {
-    assertThat(posixRegex("abc", "abc", true), is(true));
-    assertThat(posixRegex("abc", "^a", true), is(true));
-    assertThat(posixRegex("abc", "(b|d)", true), is(true));
-    assertThat(posixRegex("abc", "^(b|c)", true), is(false));
+    assertThat(posixRegexCaseSensitive("abc", "abc"), is(true));
+    assertThat(posixRegexCaseSensitive("abc", "^a"), is(true));
+    assertThat(posixRegexCaseSensitive("abc", "(b|d)"), is(true));
+    assertThat(posixRegexCaseSensitive("abc", "^(b|c)"), is(false));
 
-    assertThat(posixRegex("abc", "ABC", false), is(true));
-    assertThat(posixRegex("abc", "^A", false), is(true));
-    assertThat(posixRegex("abc", "(B|D)", false), is(true));
-    assertThat(posixRegex("abc", "^(B|C)", false), is(false));
+    assertThat(posixRegexCaseInsensitive("abc", "ABC"), is(true));
+    assertThat(posixRegexCaseInsensitive("abc", "^A"), is(true));
+    assertThat(posixRegexCaseInsensitive("abc", "(B|D)"), is(true));
+    assertThat(posixRegexCaseInsensitive("abc", "^(B|C)"), is(false));
 
-    assertThat(posixRegex("abc", "^[[:xdigit:]]$", false), is(false));
-    assertThat(posixRegex("abc", "^[[:xdigit:]]+$", false), is(true));
-    assertThat(posixRegex("abcq", "^[[:xdigit:]]+$", false), is(false));
+    assertThat(posixRegexCaseInsensitive("abc", "^[[:xdigit:]]$"), is(false));
+    assertThat(posixRegexCaseInsensitive("abc", "^[[:xdigit:]]+$"), is(true));
+    assertThat(posixRegexCaseInsensitive("abcq", "^[[:xdigit:]]+$"), is(false));
 
-    assertThat(posixRegex("abc", "[[:xdigit:]]", false), is(true));
-    assertThat(posixRegex("abc", "[[:xdigit:]]+", false), is(true));
-    assertThat(posixRegex("abcq", "[[:xdigit:]]", false), is(true));
+    assertThat(posixRegexCaseInsensitive("abc", "[[:xdigit:]]"), is(true));
+    assertThat(posixRegexCaseInsensitive("abc", "[[:xdigit:]]+"), is(true));
+    assertThat(posixRegexCaseInsensitive("abcq", "[[:xdigit:]]"), is(true));
   }
 
   @Test public void testRegexpReplace() {

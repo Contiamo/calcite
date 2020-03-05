@@ -441,16 +441,18 @@ public class RexImpTable {
         NotImplementor.of(similarImplementor), false);
 
     // POSIX REGEX
-    final MethodImplementor posixRegexImplementor =
-        new MethodImplementor(BuiltInMethod.POSIX_REGEX.method);
+    final MethodImplementor posixRegexCsImplementor =
+        new MethodImplementor(BuiltInMethod.POSIX_REGEX_CASE_SENSITIVE.method);
+    final MethodImplementor posixRegexCiImplementor =
+        new MethodImplementor(BuiltInMethod.POSIX_REGEX_CASE_INSENSITIVE.method);
     defineImplementor(SqlStdOperatorTable.POSIX_REGEX_CASE_INSENSITIVE, NullPolicy.STRICT,
-        posixRegexImplementor, false);
+        posixRegexCiImplementor, false);
     defineImplementor(SqlStdOperatorTable.POSIX_REGEX_CASE_SENSITIVE, NullPolicy.STRICT,
-        posixRegexImplementor, false);
+        posixRegexCsImplementor, false);
     defineImplementor(SqlStdOperatorTable.NEGATED_POSIX_REGEX_CASE_INSENSITIVE, NullPolicy.STRICT,
-        NotImplementor.of(posixRegexImplementor), false);
+        NotImplementor.of(posixRegexCiImplementor), false);
     defineImplementor(SqlStdOperatorTable.NEGATED_POSIX_REGEX_CASE_SENSITIVE, NullPolicy.STRICT,
-        NotImplementor.of(posixRegexImplementor), false);
+        NotImplementor.of(posixRegexCsImplementor), false);
     defineImplementor(REGEXP_REPLACE, NullPolicy.STRICT,
         new NotNullImplementor() {
           final NotNullImplementor[] implementors = {
