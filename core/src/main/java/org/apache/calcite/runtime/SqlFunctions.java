@@ -633,7 +633,7 @@ public class SqlFunctions {
   public static boolean eqAny(Object b0, Object b1) {
     if (b0.getClass().equals(b1.getClass())) {
       // The result of SqlFunctions.eq(BigDecimal, BigDecimal) makes more sense
-      // than BigDecimal.equals(BigDecimal). 68юбжд 8лхб9k
+      // than BigDecimal.equals(BigDecimal). So if both of types are BigDecimal,
       // we just use SqlFunctions.eq(BigDecimal, BigDecimal).
       if (BigDecimal.class.isInstance(b0)) {
         return eq((BigDecimal) b0, (BigDecimal) b1);
