@@ -470,8 +470,7 @@ public class JdbcRules {
         RelBuilderFactory relBuilderFactory) {
       super(Project.class, (Predicate<Project>) project ->
               (out.dialect.supportsWindowFunctions()
-                  || !RexOver.containsOver(project.getProjects(), null))
-                  && !userDefinedFunctionInProject(project),
+                  || !RexOver.containsOver(project.getProjects(), null)),
           Convention.NONE, out, relBuilderFactory, "JdbcProjectRule");
     }
 
