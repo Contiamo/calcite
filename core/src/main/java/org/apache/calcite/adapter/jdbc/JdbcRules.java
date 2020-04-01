@@ -46,9 +46,11 @@ import org.apache.calcite.rel.core.Minus;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.core.Union;
 import org.apache.calcite.rel.core.Values;
+import org.apache.calcite.rel.metadata.RelColumnMapping;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
@@ -77,6 +79,7 @@ import com.google.common.collect.ImmutableList;
 
 import org.slf4j.Logger;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -229,7 +232,8 @@ public class JdbcRules {
         new JdbcIntersectRule(out, relBuilderFactory),
         new JdbcMinusRule(out, relBuilderFactory),
         new JdbcTableModificationRule(out, relBuilderFactory),
-        new JdbcValuesRule(out, relBuilderFactory));
+        new JdbcValuesRule(out, relBuilderFactory),
+        new JdbcTableFunctionScanRule(out, relBuilderFactory));
   }
 
   /** Abstract base class for rule that converts to JDBC. */
@@ -987,6 +991,40 @@ public class JdbcRules {
       Values values = (Values) rel;
       return new JdbcValues(values.getCluster(), values.getRowType(),
           values.getTuples(), values.getTraitSet().replace(out));
+    }
+  }
+
+  /** Rule that converts a table function scan to JDBC. */
+  public static class JdbcTableFunctionScanRule extends JdbcConverterRule {
+    /** Creates a JdbcTableFunctionScanRule. */
+    private JdbcTableFunctionScanRule(JdbcConvention out,
+                           RelBuilderFactory relBuilderFactory) {
+      super(TableFunctionScan.class, (Predicate<RelNode>) r -> true, Convention.NONE,
+              out, relBuilderFactory, "JdbcTableFunctionScanRule");
+    }
+
+    @Override public RelNode convert(RelNode rel) {
+      TableFunctionScan tablefunctionScan = (TableFunctionScan) rel;
+
+      return new TableFunctionScan(
+              rel.getCluster(),
+              tablefunctionScan.getTraitSet(),
+              tablefunctionScan.getInputs(),
+              tablefunctionScan.getCall(),
+              tablefunctionScan.getElementType(),
+              tablefunctionScan.getRowType(),
+              tablefunctionScan.getColumnMappings()) {
+
+        @Override public TableFunctionScan copy(
+                RelTraitSet traitSet,
+                List<RelNode> inputs,
+                RexNode rexCall,
+                Type elementType,
+                RelDataType rowType,
+                Set<RelColumnMapping> columnMappings) {
+          return null;
+        }
+      };
     }
   }
 
