@@ -50,6 +50,7 @@ import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.core.Union;
 import org.apache.calcite.rel.core.Values;
+import org.apache.calcite.rel.metadata.RelColumnMapping;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
@@ -78,6 +79,7 @@ import com.google.common.collect.ImmutableList;
 
 import org.slf4j.Logger;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -995,28 +997,40 @@ public class JdbcRules {
   /** Implementation of {@link org.apache.calcite.rel.core.Project} in
    * {@link JdbcConvention jdbc calling convention}. */
   public static class JdbcTableFunctionScan
-          extends Project
+          extends TableFunctionScan
           implements JdbcRel {
     public JdbcTableFunctionScan(
             RelOptCluster cluster,
             RelTraitSet traitSet,
-            RelNode input,
-            List<? extends RexNode> projects,
-            RelDataType rowType) {
-      super(cluster, traitSet, input, projects, rowType);
+            List<RelNode> inputs,
+            RexNode rexCall,
+            Type elementType,
+            RelDataType rowType,
+            Set<RelColumnMapping> columnMappings) {
+      super(cluster, traitSet, inputs, rexCall, elementType, rowType, columnMappings);
       assert getConvention() instanceof JdbcConvention;
     }
 
     @Deprecated // to be removed before 2.0
-    public JdbcTableFunctionScan(RelOptCluster cluster, RelTraitSet traitSet,
-                       RelNode input, List<RexNode> projects, RelDataType rowType, int flags) {
-      this(cluster, traitSet, input, projects, rowType);
+    public JdbcTableFunctionScan(RelOptCluster cluster,
+                                 RelTraitSet traitSet,
+                                 List<RelNode> inputs,
+                                 RexNode rexCall,
+                                 Type elementType,
+                                 RelDataType rowType,
+                                 Set<RelColumnMapping> columnMappings,
+                                 int flags) {
+      this(cluster, traitSet, inputs, rexCall, elementType, rowType, columnMappings);
       Util.discard(flags);
     }
 
-    @Override public JdbcTableFunctionScan copy(RelTraitSet traitSet, RelNode input,
-                                      List<RexNode> projects, RelDataType rowType) {
-      return new JdbcTableFunctionScan(getCluster(), traitSet, input, projects, rowType);
+    @Override public JdbcTableFunctionScan copy(RelTraitSet traitSet,
+                                                List<RelNode> inputs,
+                                                RexNode rexCall,
+                                                Type elementType,
+                                                RelDataType rowType,
+                                                Set<RelColumnMapping> columnMappings) {
+      return new JdbcTableFunctionScan(getCluster(), traitSet, inputs, rexCall, elementType, rowType, columnMappings);
     }
 
     @Override public RelOptCost computeSelfCost(RelOptPlanner planner,
@@ -1045,9 +1059,11 @@ public class JdbcRules {
       return new JdbcTableFunctionScan(
               rel.getCluster(),
               tablefunctionScan.getTraitSet(),
-              tablefunctionScan.getInput(0),
-              tablefunctionScan.getChildExps(),
-              tablefunctionScan.getRowType());
+              tablefunctionScan.getInputs(),
+              tablefunctionScan.getCall(),
+              tablefunctionScan.getElementType(),
+              tablefunctionScan.getRowType(),
+              tablefunctionScan.getColumnMappings());
     }
   }
 
