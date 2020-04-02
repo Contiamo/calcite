@@ -994,7 +994,7 @@ public class JdbcRules {
     }
   }
 
-  /** Implementation of {@link org.apache.calcite.rel.core.Project} in
+  /** Implementation of {@link org.apache.calcite.rel.core.TableFunctionScan} in
    * {@link JdbcConvention jdbc calling convention}. */
   public static class JdbcTableFunctionScan
           extends TableFunctionScan
@@ -1030,7 +1030,8 @@ public class JdbcRules {
                                                 Type elementType,
                                                 RelDataType rowType,
                                                 Set<RelColumnMapping> columnMappings) {
-      return new JdbcTableFunctionScan(getCluster(), traitSet, inputs, rexCall, elementType, rowType, columnMappings);
+      return new JdbcTableFunctionScan(getCluster(), traitSet, inputs, rexCall,
+              elementType, rowType, columnMappings);
     }
 
     @Override public RelOptCost computeSelfCost(RelOptPlanner planner,
