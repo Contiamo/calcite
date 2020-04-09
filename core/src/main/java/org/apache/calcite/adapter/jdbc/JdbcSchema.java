@@ -75,7 +75,7 @@ public class JdbcSchema implements Schema {
   final String catalog;
   final String schema;
   public final SqlDialect dialect;
-  final JdbcConvention convention;
+  public final JdbcConvention convention;
   private ImmutableMap<String, JdbcTable> tableMap;
   private final boolean snapshot;
 
