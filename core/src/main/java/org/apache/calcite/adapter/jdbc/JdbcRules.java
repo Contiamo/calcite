@@ -46,11 +46,9 @@ import org.apache.calcite.rel.core.Minus;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.Sort;
-import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.core.Union;
 import org.apache.calcite.rel.core.Values;
-import org.apache.calcite.rel.metadata.RelColumnMapping;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
@@ -79,7 +77,6 @@ import com.google.common.collect.ImmutableList;
 
 import org.slf4j.Logger;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -232,8 +229,7 @@ public class JdbcRules {
         new JdbcIntersectRule(out, relBuilderFactory),
         new JdbcMinusRule(out, relBuilderFactory),
         new JdbcTableModificationRule(out, relBuilderFactory),
-        new JdbcValuesRule(out, relBuilderFactory),
-        new JdbcTableFunctionScanRule(out, relBuilderFactory));
+        new JdbcValuesRule(out, relBuilderFactory));
   }
 
   /** Abstract base class for rule that converts to JDBC. */
@@ -470,7 +466,7 @@ public class JdbcRules {
     }
 
     /** Creates a JdbcProjectRule. */
-    public  JdbcProjectRule(final JdbcConvention out,
+    public JdbcProjectRule(final JdbcConvention out,
         RelBuilderFactory relBuilderFactory) {
       super(Project.class, (Predicate<Project>) project ->
               out.dialect.supportsWindowFunctions()
@@ -991,80 +987,6 @@ public class JdbcRules {
       Values values = (Values) rel;
       return new JdbcValues(values.getCluster(), values.getRowType(),
           values.getTuples(), values.getTraitSet().replace(out));
-    }
-  }
-
-  /** Implementation of {@link org.apache.calcite.rel.core.TableFunctionScan} in
-   * {@link JdbcConvention jdbc calling convention}. */
-  public static class JdbcTableFunctionScan
-          extends TableFunctionScan
-          implements JdbcRel {
-    public JdbcTableFunctionScan(
-            RelOptCluster cluster,
-            RelTraitSet traitSet,
-            List<RelNode> inputs,
-            RexNode rexCall,
-            Type elementType,
-            RelDataType rowType,
-            Set<RelColumnMapping> columnMappings) {
-      super(cluster, traitSet, inputs, rexCall, elementType, rowType, columnMappings);
-      assert getConvention() instanceof JdbcConvention;
-    }
-
-    @Deprecated // to be removed before 2.0
-    public JdbcTableFunctionScan(RelOptCluster cluster,
-                                 RelTraitSet traitSet,
-                                 List<RelNode> inputs,
-                                 RexNode rexCall,
-                                 Type elementType,
-                                 RelDataType rowType,
-                                 Set<RelColumnMapping> columnMappings,
-                                 int flags) {
-      this(cluster, traitSet, inputs, rexCall, elementType, rowType, columnMappings);
-      Util.discard(flags);
-    }
-
-    @Override public JdbcTableFunctionScan copy(RelTraitSet traitSet,
-                                                List<RelNode> inputs,
-                                                RexNode rexCall,
-                                                Type elementType,
-                                                RelDataType rowType,
-                                                Set<RelColumnMapping> columnMappings) {
-      return new JdbcTableFunctionScan(getCluster(), traitSet, inputs, rexCall,
-              elementType, rowType, columnMappings);
-    }
-
-    @Override public RelOptCost computeSelfCost(RelOptPlanner planner,
-                                                RelMetadataQuery mq) {
-      return super.computeSelfCost(planner, mq)
-              .multiplyBy(JdbcConvention.COST_MULTIPLIER);
-    }
-
-    public JdbcImplementor.Result implement(JdbcImplementor implementor) {
-      return implementor.implement(this);
-    }
-  }
-
-  /** Rule that converts a table function scan to JDBC. */
-  public static class JdbcTableFunctionScanRule extends JdbcConverterRule {
-    /** Creates a JdbcTableFunctionScanRule. */
-    private JdbcTableFunctionScanRule(final JdbcConvention out,
-                           RelBuilderFactory relBuilderFactory) {
-      super(TableFunctionScan.class, (Predicate<RelNode>) r -> true, Convention.NONE,
-              out, relBuilderFactory, "JdbcTableFunctionScanRule");
-    }
-
-    @Override public RelNode convert(RelNode rel) {
-      TableFunctionScan tablefunctionScan = (TableFunctionScan) rel;
-
-      return new JdbcTableFunctionScan(
-              rel.getCluster(),
-              tablefunctionScan.getTraitSet(),
-              tablefunctionScan.getInputs(),
-              tablefunctionScan.getCall(),
-              tablefunctionScan.getElementType(),
-              tablefunctionScan.getRowType(),
-              tablefunctionScan.getColumnMappings());
     }
   }
 
