@@ -52,19 +52,15 @@ import org.apache.calcite.rel.core.Values;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexMultisetUtil;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexUtil;
-import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.schema.ModifiableTable;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlFunction;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
@@ -474,17 +470,6 @@ public class JdbcRules {
           Convention.NONE, out, relBuilderFactory, "JdbcProjectRule");
     }
 
-    private static boolean userDefinedFunctionInProject(Project project) {
-      CheckingUserDefinedFunctionVisitor visitor = new CheckingUserDefinedFunctionVisitor();
-      for (RexNode node : project.getChildExps()) {
-        node.accept(visitor);
-        if (visitor.containsUserDefinedFunction()) {
-          return true;
-        }
-      }
-      return false;
-    }
-
     public RelNode convert(RelNode rel) {
       final Project project = (Project) rel;
 
@@ -550,15 +535,8 @@ public class JdbcRules {
     /** Creates a JdbcFilterRule. */
     public JdbcFilterRule(JdbcConvention out,
         RelBuilderFactory relBuilderFactory) {
-      super(Filter.class,
-          (Predicate<Filter>) r -> !userDefinedFunctionInFilter(r),
+      super(Filter.class, (Predicate<RelNode>) r -> true,
           Convention.NONE, out, relBuilderFactory, "JdbcFilterRule");
-    }
-
-    private static boolean userDefinedFunctionInFilter(Filter filter) {
-      CheckingUserDefinedFunctionVisitor visitor = new CheckingUserDefinedFunctionVisitor();
-      filter.getCondition().accept(visitor);
-      return visitor.containsUserDefinedFunction();
     }
 
     public RelNode convert(RelNode rel) {
@@ -1005,32 +983,6 @@ public class JdbcRules {
     public JdbcImplementor.Result implement(JdbcImplementor implementor) {
       return implementor.implement(this);
     }
-  }
-
-  /**
-   * Visitor for checking whether part of projection is a user defined function or not
-   */
-  private static class CheckingUserDefinedFunctionVisitor extends RexVisitorImpl<Void> {
-
-    private boolean containsUsedDefinedFunction = false;
-
-    CheckingUserDefinedFunctionVisitor() {
-      super(true);
-    }
-
-    public boolean containsUserDefinedFunction() {
-      return containsUsedDefinedFunction;
-    }
-
-    @Override public Void visitCall(RexCall call) {
-      SqlOperator operator = call.getOperator();
-      if (operator instanceof SqlFunction
-          && ((SqlFunction) operator).getFunctionType().isUserDefined()) {
-        containsUsedDefinedFunction |= true;
-      }
-      return super.visitCall(call);
-    }
-
   }
 
 }
