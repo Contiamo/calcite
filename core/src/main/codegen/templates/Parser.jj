@@ -5045,6 +5045,7 @@ SqlNode BuiltinFunctionCall() :
     final SqlIdentifier name;
     List<SqlNode> args = null;
     SqlNode e = null;
+    SqlNode defaultArg = SqlLiteral.createExactNumeric("0", SqlParserPos.ZERO);;
     final Span s;
     SqlDataTypeSpec dt;
     TimeUnit interval;
@@ -5168,14 +5169,24 @@ SqlNode BuiltinFunctionCall() :
         <LPAREN>
         e = Expression(ExprContext.ACCEPT_SUB_QUERY)
         { args = startList(e); }
-        ( <FROM> | <COMMA>)
-        e = Expression(ExprContext.ACCEPT_SUB_QUERY)
-        { args.add(e); }
-        [
-            (<FOR> | <COMMA>)
+        (
+
+            ( <FROM> | <COMMA>)
             e = Expression(ExprContext.ACCEPT_SUB_QUERY)
             { args.add(e); }
-        ]
+            [
+                (<FOR> | <COMMA>)
+                e = Expression(ExprContext.ACCEPT_SUB_QUERY)
+                { args.add(e); }
+            ]
+        |
+            <FOR>
+            e = Expression(ExprContext.ACCEPT_SUB_QUERY)
+            {
+                args.add(defaultArg);
+                args.add(e);
+            }
+        )
         <RPAREN> {
             return SqlStdOperatorTable.SUBSTRING.createCall(
                 s.end(this), args);
