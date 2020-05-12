@@ -7338,6 +7338,7 @@ public class SqlParserTest {
   @Test public void testCastToVarchar() {
     checkExp("cast(x as varchar(5))", "CAST(`X` AS VARCHAR(5))");
     checkExp("cast(x as varchar)", "CAST(`X` AS VARCHAR)");
+    checkExp("cast(x as text)", "CAST(`X` AS VARCHAR)");
     checkExp("cast(x as varBINARY(5))", "CAST(`X` AS VARBINARY(5))");
     checkExp("cast(x as varbinary)", "CAST(`X` AS VARBINARY)");
   }
