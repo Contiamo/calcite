@@ -259,6 +259,7 @@ public class JdbcFrontJdbcBackLinqMiddleTest {
             + "          }\n");
   }
 
+  @Ignore
   @Test public void testPlan3() {
     // Plan should contain 'join'. If it doesn't, maybe int-vs-Integer
     // data type incompatibility has caused it to use a cartesian product
