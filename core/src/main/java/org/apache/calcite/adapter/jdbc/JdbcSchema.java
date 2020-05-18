@@ -231,11 +231,11 @@ public class JdbcSchema implements Schema {
     return ImmutableMultimap.of();
   }
 
-  public final Collection<Function> getFunctions(String name) {
+  public Collection<Function> getFunctions(String name) {
     return getFunctions().get(name); // never null
   }
 
-  public final Set<String> getFunctionNames() {
+  public Set<String> getFunctionNames() {
     return getFunctions().keySet();
   }
 
