@@ -685,6 +685,10 @@ public class SqlDialect {
     return true;
   }
 
+  public boolean supportsJoinType(JoinType joinType) {
+    return true;
+  }
+
   public boolean supportsAggregateFunction(SqlKind kind) {
     switch (kind) {
     case COUNT:

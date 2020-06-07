@@ -51,13 +51,16 @@ import org.apache.calcite.rel.core.Union;
 import org.apache.calcite.rel.core.Values;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
+import org.apache.calcite.rel.rel2sql.SqlImplementor;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexMultisetUtil;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.schema.ModifiableTable;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlDialect;
@@ -260,6 +263,12 @@ public class JdbcRules {
 
   /** Rule that converts a join to JDBC. */
   public static class JdbcJoinRule extends JdbcConverterRule {
+
+    private static boolean isSupported(JdbcConvention out, Join join) {
+      return out.dialect.supportsJoinType(SqlImplementor.joinType(join.getJoinType()))
+              && functionsSupported(out.dialect, join.getCondition());
+    }
+
     @Deprecated // to be removed before 2.0
     public JdbcJoinRule(JdbcConvention out) {
       this(out, RelFactories.LOGICAL_BUILDER);
@@ -268,8 +277,8 @@ public class JdbcRules {
     /** Creates a JdbcJoinRule. */
     public JdbcJoinRule(JdbcConvention out,
         RelBuilderFactory relBuilderFactory) {
-      super(Join.class, (Predicate<RelNode>) r -> true, Convention.NONE,
-          out, relBuilderFactory, "JdbcJoinRule");
+      super(Join.class, (Predicate<Join>) join -> isSupported(out, join), Convention.NONE,
+              out, relBuilderFactory, "JdbcJoinRule");
     }
 
     @Override public RelNode convert(RelNode rel) {
@@ -456,6 +465,16 @@ public class JdbcRules {
    * an {@link org.apache.calcite.adapter.jdbc.JdbcRules.JdbcProject}.
    */
   public static class JdbcProjectRule extends JdbcConverterRule {
+    private static boolean isSupported(JdbcConvention out, Project project) {
+      for (RexNode node: project.getChildExps()) {
+        if (!functionsSupported(out.dialect, node)) {
+          return false;
+        }
+      }
+      return out.dialect.supportsWindowFunctions()
+              || !RexOver.containsOver(project.getProjects(), null);
+    }
+
     @Deprecated // to be removed before 2.0
     public JdbcProjectRule(final JdbcConvention out) {
       this(out, RelFactories.LOGICAL_BUILDER);
@@ -464,9 +483,7 @@ public class JdbcRules {
     /** Creates a JdbcProjectRule. */
     public JdbcProjectRule(final JdbcConvention out,
         RelBuilderFactory relBuilderFactory) {
-      super(Project.class, (Predicate<Project>) project ->
-              out.dialect.supportsWindowFunctions()
-                  || !RexOver.containsOver(project.getProjects(), null),
+      super(Project.class, (Predicate<Project>) project -> isSupported(out, project),
           Convention.NONE, out, relBuilderFactory, "JdbcProjectRule");
     }
 
@@ -535,8 +552,9 @@ public class JdbcRules {
     /** Creates a JdbcFilterRule. */
     public JdbcFilterRule(JdbcConvention out,
         RelBuilderFactory relBuilderFactory) {
-      super(Filter.class, (Predicate<RelNode>) r -> true,
-          Convention.NONE, out, relBuilderFactory, "JdbcFilterRule");
+      super(Filter.class,
+              (Predicate<Filter>) filter -> functionsSupported(out.dialect, filter.getCondition()),
+              Convention.NONE, out, relBuilderFactory, "JdbcFilterRule");
     }
 
     public RelNode convert(RelNode rel) {
@@ -985,6 +1003,40 @@ public class JdbcRules {
     }
   }
 
+  /**
+   * Visitor for checking whether part of projection is a user defined function or not
+   */
+  private static class CheckSupportedFunctionsVisitor extends RexVisitorImpl<Void> {
+    private boolean supported = true;
+    private final SqlDialect dialect;
+
+    CheckSupportedFunctionsVisitor(SqlDialect dialect) {
+      super(true);
+      this.dialect = dialect;
+    }
+
+    public boolean supported() {
+      return supported;
+    }
+
+    @Override public Void visitCall(RexCall call) {
+      ArrayList<RelDataType> paramsListType = new ArrayList<RelDataType>();
+      for (RexNode currNode : call.getOperands()) {
+        paramsListType.add(currNode.getType());
+      }
+      if (!dialect.supportsFunction(call.getOperator(), call.getType(), paramsListType)) {
+        supported = false;
+        return null;
+      }
+      return super.visitCall(call);
+    }
+  }
+
+  public static boolean functionsSupported(SqlDialect dialect, RexNode node) {
+    CheckSupportedFunctionsVisitor check = new CheckSupportedFunctionsVisitor(dialect);
+    node.accept(check);
+    return check.supported();
+  }
 }
 
 // End JdbcRules.java
