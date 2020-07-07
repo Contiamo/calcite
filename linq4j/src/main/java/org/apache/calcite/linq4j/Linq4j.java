@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -531,7 +532,11 @@ public abstract class Linq4j {
     protected final Iterable<T> iterable;
 
     IterableEnumerable(Iterable<T> iterable) {
-      this.iterable = iterable;
+      if (iterable == null) {
+        this.iterable = Collections.emptyList();
+      } else {
+        this.iterable = iterable;
+      }
     }
 
     public Iterator<T> iterator() {
