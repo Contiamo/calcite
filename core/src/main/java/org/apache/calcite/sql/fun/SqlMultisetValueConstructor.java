@@ -28,6 +28,7 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.type.InferTypes;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 
 import java.util.List;
@@ -79,7 +80,11 @@ public class SqlMultisetValueConstructor extends SqlSpecialOperator {
   protected RelDataType getComponentType(
       RelDataTypeFactory typeFactory,
       List<RelDataType> argTypes) {
-    return typeFactory.leastRestrictive(argTypes);
+    if (argTypes.size() == 0) {
+      return typeFactory.createSqlType(SqlTypeName.ANY);
+    } else {
+      return typeFactory.leastRestrictive(argTypes);
+    }
   }
 
   public boolean checkOperandTypes(
@@ -90,9 +95,6 @@ public class SqlMultisetValueConstructor extends SqlSpecialOperator {
             callBinding.getValidator(),
             callBinding.getScope(),
             callBinding.operands());
-    if (argTypes.size() == 0) {
-      throw callBinding.newValidationError(RESOURCE.requireAtLeastOneArg());
-    }
     final RelDataType componentType =
         getComponentType(
             callBinding.getTypeFactory(),
