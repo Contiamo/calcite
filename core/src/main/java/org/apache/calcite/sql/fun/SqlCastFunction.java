@@ -20,6 +20,8 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFamily;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCallBinding;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -32,6 +34,7 @@ import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.InferTypes;
 import org.apache.calcite.sql.type.SqlOperandCountRanges;
 import org.apache.calcite.sql.type.SqlTypeFamily;
@@ -183,7 +186,16 @@ public class SqlCastFunction extends SqlFunction {
     if (call.operand(1) instanceof SqlIntervalQualifier) {
       writer.sep("INTERVAL");
     }
-    call.operand(1).unparse(writer, 0, 0);
+
+    SqlNode op1 = call.operand(1);
+    if (op1 instanceof SqlDataTypeSpec) {
+      SqlDialect dialect = writer.getDialect();
+      RelDataType rt = new BasicSqlType(dialect.getTypeSystem(), ((SqlDataTypeSpec) op1).getTypeNameSpec());
+      dialect.getCastSpec(rt).unparse(writer, 0, 0);
+    } else {
+      op1.unparse(writer, 0, 0);
+    }
+
     writer.endFunCall(frame);
   }
 
